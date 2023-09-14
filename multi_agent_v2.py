@@ -1,21 +1,37 @@
 import time
-from robomaster import robot
+from robomaster import robot, conn
 import rospy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 
+# 3JKCK1600303EM
 
-SN = ["3JKCK1600303EM","3JKCK6U0030A54"]
 
+print(conn.scan_robot_ip("3JKCK6U0030A59",timeout=10))
+
+tempSN = ["3JKCK6U0030A54","3JKCK1600303QV","3JKCK6U0030AC4","3JKCK1600303EM"]
+SN = []
+for i in range(0,len(tempSN),1):
+        if(conn.scan_robot_ip(tempSN[i],timeout=10) != None):
+                SN.append(tempSN[i])
+
+print(SN)
+
+
+
+
+control = []
 robot1 = [0,0,0,0]
 robot2 = [0,0,0,0]
+control.append(robot1)
+control.append(robot2)
 
-
+robots = []
 
 state = " "
 
 def robot1_Collector(msg): 
-    global robot_1
+    global robot1
 
     robot1[0] = msg.linear.x
     robot1[1] = msg.linear.y
@@ -45,28 +61,32 @@ def dataCollector():
 
 def main():
         global state,robot1,robot2
-        counter = 0
-        robot_1 = robot.Robot()
-        robot_1.initialize(conn_type="sta",sn=SN[counter])
-        chassis_robot_1= robot_1.chassis
-        counter = counter + 1
-        robot_2 = robot.Robot()
-        robot_2.initialize(conn_type="sta",sn=SN[counter])
-        chassis_robot_2= robot_2.chassis
+
+        for i in range(0,len(SN),1):
+                print(f"intentando {SN[i]}")
+                robots.append(robot.Robot())
+                robots[i].initialize(conn_type="sta",sn=SN[i])
+                print(f"robot con sn {SN[i]} inicializado")
+                print(i, robots)
 
 
         while True:
                dataCollector()
-               chassis_robot_1.drive_wheels(robot1[0],robot1[1],robot1[2],robot1[3])
-               chassis_robot_2.drive_wheels(robot2[0],robot2[1],robot2[2],robot2[3])
+               for i in range(0,len(robots),1):
+                        params = []
+                        for j in range(0,4,1):
+                                params.append(control[i][j])
+                        
+                        robots[i].chassis.drive_wheels(params[0],params[1],params[2],params[3])
+               
 
                if state == 'shutdown':
-                    chassis_robot_1.drive_wheels(0,0,0,0)
-                    chassis_robot_2.drive_wheels(0,0,0,0)
-                    break
+                        for i in range(0,len(robots),1):
+                                robots[i].chassis.drive_wheels(0,0,0,0)
+                        break
         
-        robot_1.close()
-        robot_2.close()
+        for i in range(1,len(robots),1):
+                robots[i-1].close()
 
                 
 if __name__ == '__main__':
