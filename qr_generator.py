@@ -13,7 +13,7 @@ if __name__ == '__main__':
     info = helper.build_qrcode_string(ssid="red2", password="224426628816")
     myqr.run(words=info)
     time.sleep(1)
-    img = Image.open(QRCODE_NAME)
+    img = Image.open(QRCODE_NAME)   
     img.show()
     if helper.wait_for_connection():
         print("Connected!")
