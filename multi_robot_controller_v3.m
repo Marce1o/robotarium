@@ -8,6 +8,7 @@ rosinit
 %%Configuracion del publicador de ROS con sus tipos correspondientes
 
 wheel_speed = rospublisher("/robots_data","std_msgs/String","DataFormat","struct");
+blaster_speed = rospublisher("/blaster","std_msgs/String","DataFormat","struct");
 state_publisher = rospublisher("/state","std_msgs/String","DataFormat","struct");
 active_robots = rossubscriber("/robots","std_msgs/Int16","DataFormat","struct");
 
@@ -26,6 +27,8 @@ doonce = 0;
 lastNext = 0;
 lastPrev = 0;
 robotSelector = 0;
+
+max_speed = 150;
 
 n_robots = receive(active_robots,100);
 n_robots = n_robots.Data;
@@ -91,10 +94,29 @@ while 1
             end
         end
     end 
+
+    speed_blaster = '';
+    for i = 1:n_robots
+        temp = move_blaster(axes(1,2),axes(1,1),max_speed);
+        if(robotSelector ~= i)
+            temp = [0,0];
+        end
+        for j = 1:2
+            speed_blaster = strcat(speed_blaster,num2str(temp(j)));
+            if j ~= 2
+                speed_blaster = strcat(speed_blaster,',');
+            else
+                if i ~= n_robots
+                    speed_blaster = strcat(speed_blaster,'~');
+                end
+            end
+        end
+    end 
+
+
    
 
      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ROS SEND INFO
-
     pub_msg = rosmessage(wheel_speed);
 
     disp(speeds)
@@ -102,8 +124,15 @@ while 1
     %pub_msg.Data = '[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]';
     send(wheel_speed,pub_msg)
 
-    pause(dt)
+    disp('next blaster')
+
+    disp(speed_blaster)
+    pub_msg = rosmessage(blaster_speed);
+    pub_msg.Data = speed_blaster;
+    send(blaster_speed,pub_msg)
     
+
+    pause(dt)    
    
 end
 
@@ -132,4 +161,31 @@ function wheels = move_bot(x,y,max_rpm)
 end
 
 
+function blaster = move_blaster(x,y,max_speed)
+    blaster = [];
+    vel_p = 0;
+    vel_y = 0;
+    if abs(x) > 0.05 || abs(y) > 0.05
+        if abs(x) > abs(y)
+            vel_p = -x*max_speed;
+            vel_y = 0;
+        elseif abs(x) < abs(y)
+            vel_y = y*max_speed;
+            vel_p = 0;
+        end
 
+        blaster = [vel_p,vel_y];
+    else 
+        blaster = [vel_p,vel_y];
+    end
+
+
+end
+
+
+function send_ros(topic,data)
+    pub_msg = rosmessage(topic);
+    pub_msg.Data = data;
+    send(topic,pub_msg)
+    
+end
