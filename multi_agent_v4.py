@@ -3,32 +3,61 @@ from robomaster import robot, conn
 import rospy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
+from std_msgs.msg import Int16
 
-# "3JKCK1600303QV","3JKCK6U0030AC4","3JKCK1600303EM"
+from io import StringIO
+import sys
+tmp = sys.stdout
+resultado = StringIO()
+sys.stdout = resultado
 
+conn.scan_robot_ip_list(timeout=10)
 
+sys.stdout = tmp
 
+conectados = resultado.getvalue()
 
- ################ Declaracion SN de los robots
+listaDeConectados = conectados.split("\n")
+
+del listaDeConectados[-1]
+
+for i in range(0,len(listaDeConectados)):
+    listaDeConectados[i] = listaDeConectados[i][14:28]
+
+################ Declaracion SN de los robots
 tempSN = ["3JKCK6U0030A54","3JKCK1600303QV","3JKCK6U0030AC4","3JKCK1600303EM"]
 SN = []
 
-
 ################ Añadir SN que se encuentran conectadas 
-for i in range(0,len(tempSN),1):
-        if(conn.scan_robot_ip(tempSN[i],timeout=10) != None):
-                SN.append(tempSN[i])
+for i in range(0,len(tempSN)):
+    if tempSN[i] in listaDeConectados:
+        SN.append(tempSN[i])
 
 print(SN)
-
-
-
 
 control = []
 robots = []
 robots_data= []
 
 state = " "
+
+def robotPublisher(SN):
+       #print('publisher')
+       rospy.init_node('robot_controller',anonymous=True)
+       pub = rospy.Publisher('robots', Int16, queue_size=10)
+       n_robots = len(SN)
+       rate = rospy.Rate(10)
+       counter = 0
+       while not rospy.is_shutdown():
+                counter = counter + 1 
+                rospy.loginfo(n_robots)
+                pub.publish(n_robots)
+                rate.sleep()
+
+                if counter == 10:
+                        break
+
+
 
 
 ################ Funcion encargada de obtener la informacion de los robots
@@ -71,24 +100,25 @@ def main():
                 robots[i].initialize(conn_type="sta",sn=SN[i])
                 print(f"robot con sn {SN[i]} inicializado")
                 print(i, robots)
+                
 
         while True:
-               dataCollector()
+                dataCollector()
 
 
                 ################ Ciclo encargado de asignar los valores correspondientes de velocidad a cada robot
-               for i in range(0,len(robots),1):
-                        params = []
-                        for j in range(0,4,1):
+                for i in range(0,len(robots)):
+                    params = []
+                    for j in range(0,4,1):
                                 try:
                                         params.append(robots_data[i][j])
                                 except Exception as e:
                                         print(e)
                         
-                        robots[i].chassis.drive_wheels(params[0],params[1],params[2],params[3])
+                    robots[i].chassis.drive_wheels(params[0],params[1],params[2],params[3])
                
 
-               if state == 'shutdown':
+                if state == 'shutdown':
                         for i in range(0,len(robots),1):
                                 robots[i].chassis.drive_wheels(0,0,0,0)
                         break
@@ -100,4 +130,6 @@ def main():
 
                 
 if __name__ == '__main__':
+        robotPublisher(SN)
+        print("done publishing")
         main()
