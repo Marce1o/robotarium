@@ -25,7 +25,7 @@ for i in range(0,len(listaDeConectados)):
     listaDeConectados[i] = listaDeConectados[i][14:28]
 
 ################ Declaracion SN de los robots
-tempSN = ["3JKCK6U0030A54","3JKCK1600303QV","3JKCK6U0030AC4","3JKCK1600303EM"]
+tempSN = ["3JKCK6U0030A54","3JKCK1600303QV","3JKCK6U0030AC4","3JKCK1600303EM","3JKCK1600302LH","3JKCK1600303P6"]
 SN = []
 
 ################ Añadir SN que se encuentran conectadas 
@@ -37,7 +37,7 @@ print(SN)
 
 control = []
 robots = []
-robots_data= []
+robots_data= [] 
 
 
 blaster_data = []
@@ -58,9 +58,6 @@ def robotPublisher(SN):
 
                 if counter == 10:
                         break
-
-
-
 
 ################ Funcion encargada de obtener la informacion de los robots
 def robots_data_collector(msg):
@@ -153,7 +150,8 @@ def main():
                         for i in range(0,len(robots),1):
                                 robots[i].chassis.drive_wheels(0,0,0,0)
                         break
-               
+        
+                print(f"this is the state {state}")
                
          ################ Cierra la conexion con cada uno de los robots 
         for i in range(1,len(robots),1):

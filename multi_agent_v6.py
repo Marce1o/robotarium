@@ -106,12 +106,15 @@ def dataCollector():
         rospy.sleep(0.2)
 
 def cameraProcessing(connected_robots):
-    for i in range(0,len(connected_robots),1):
-        ep_camera = connected_robots[i].camera
-        ep_camera.start_video_stream(display=True, resolution=camera.STREAM_360P)
-        img = ep_camera.read_cv2_image()
-        ep_camera.stop_video_stream()
-
+    
+    while True:
+        for i in range(0,len(connected_robots),1):
+                ep_camera = connected_robots[i].camera
+                ep_camera.start_video_stream(display=True, resolution=camera.STREAM_360P)
+                img = ep_camera.read_cv2_image()
+                ep_camera.stop_video_stream()
+                dimensions = img.shape
+                print(dimensions)
 
 def main():
         global state
