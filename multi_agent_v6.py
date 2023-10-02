@@ -5,7 +5,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 from std_msgs.msg import Int16
 import threading
-
+import cv2
 
 from io import StringIO
 import sys
@@ -110,11 +110,20 @@ def cameraProcessing(connected_robots):
     while True:
         for i in range(0,len(connected_robots),1):
                 ep_camera = connected_robots[i].camera
-                ep_camera.start_video_stream(display=True, resolution=camera.STREAM_360P)
-                img = ep_camera.read_cv2_image()
-                ep_camera.stop_video_stream()
-                dimensions = img.shape
-                print(dimensions)
+
+                try: 
+                        ep_camera.start_video_stream(display=True, resolution=camera.STREAM_720P)
+                        time.sleep(0.1)
+                        img = ep_camera.read_cv2_image()
+                        ep_camera.stop_video_stream()
+                        dimensions = img.shape
+
+                        cv2.imwrite(f"robo{i}_img.png", img)
+                        print(f"Image dimensions of {i}: {dimensions}")
+
+                        
+                except Exception as e: 
+                       print(e)
 
 def main():
         global state
@@ -158,7 +167,6 @@ def main():
                                         params.append(blaster_data[i][j])
                                 except Exception as e:
                                         print(e)
-                    print(params)
                     try:
                            robots[i].gimbal.drive_speed(params[0],params[1])
                     except Exception as e:
