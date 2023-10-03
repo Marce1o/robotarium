@@ -31,7 +31,7 @@ for i in range(0,len(listaDeConectados)):
     listaDeConectados[i] = listaDeConectados[i][14:28]
 
 ################ Declaracion SN de los robots
-tempSN = ["3JKCK6U0030A54","3JKCK1600303QV","3JKCK6U0030AC4","3JKCK1600303EM"]
+tempSN = ["3JKCK6U0030A54","3JKCK1600303QV","3JKCK6U0030AC4","3JKCK1600303EM","3JKCK1600302LH","3JKCK1600303P6"]
 SN = []
 
 ################ Añadir SN que se encuentran conectadas 
