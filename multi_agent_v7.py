@@ -140,11 +140,8 @@ def main():
 
         cameraThread.start()
 
-
-
         while True:
                 dataCollector()
-
 
                 ################ Ciclo encargado de asignar los valores correspondientes de velocidad a cada robot
                 for i in range(0,len(robots)):
