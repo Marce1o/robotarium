@@ -10,9 +10,6 @@ import cv2
 from io import StringIO
 import sys
 
-
-
-
 tmp = sys.stdout
 resultado = StringIO()
 sys.stdout = resultado
