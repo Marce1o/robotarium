@@ -110,7 +110,7 @@ def cameraProcessing(connected_robots):
                 ep_camera = connected_robots[i].camera
 
                 try: 
-                        ep_camera.start_video_stream(display=True, resolution=camera.STREAM_720P)
+                        ep_camera.start_video_stream(display=False, resolution=camera.STREAM_720P)
                         time.sleep(0.1)
                         img = ep_camera.read_cv2_image()
                         ep_camera.stop_video_stream()
@@ -135,6 +135,11 @@ def gimbal_publisher(gimbal_state):
 
                 if counter == 2:
                         break
+
+
+def get_attitude():
+        print("doing callback")
+        print(pitch_angle, yaw_angle, pitch_ground_angle, yaw_ground_angle)
 
 def main():
         global state
@@ -183,7 +188,9 @@ def main():
                         except Exception as e:
                                 print(e)
                         
-                        pitch,yaw,pitch_ground,yaw_ground_ground = robots[i].gimbal.sub_angle(freq = 1)
+                        print("before gimbal")
+                        robots[i].gimbal.sub_angle(freq = 1,callback = get_attitude)
+                        print("after gimbal")
                         
                         if i != len(robots):
                                 tempstr = str(pitch) + "," + str(yaw)+ "~"
@@ -192,7 +199,7 @@ def main():
 
                         gimbal_state = gimbal_state + tempstr
 
-                        print(gimbal_state)
+                        #print(gimbal_state)
                 
                 gimbal_publisher(gimbal_state)
 

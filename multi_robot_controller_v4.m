@@ -11,7 +11,7 @@ wheel_speed = rospublisher("/robots_data","std_msgs/String","DataFormat","struct
 blaster_speed = rospublisher("/blaster","std_msgs/String","DataFormat","struct");
 state_publisher = rospublisher("/state","std_msgs/String","DataFormat","struct");
 active_robots = rossubscriber("/robots","std_msgs/Int16","DataFormat","struct");
-gimbal_state = rossubscriber("/gimbal_state","std_msgs/String","struct");
+gimbal_state = rossubscriber("/gimbal_state","std_msgs/String","DataFormat","struct");
 
 %%Configuracion de control remoto 
 ID = 1;
@@ -36,7 +36,7 @@ n_robots = n_robots.Data;
 
 %%%%%%%%%%%%%%% CONSTANTS 
 
-k = 0.72
+k = 0.72;
 
 
 while 1
@@ -103,20 +103,28 @@ while 1
         end
     end 
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ROS SEND INFO
+    pub_msg = rosmessage(wheel_speed);
+
+    disp(speeds)
+    pub_msg.Data = speeds;
+    %pub_msg.Data = '[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]';
+    send(wheel_speed,pub_msg)
+
     speed_blaster = '';
 
     try 
         gimbal_data = receive(gimbal_state,100);
 
-        gimbal_data = split(gimbal_data,'~')
+        gimbal_data = split(gimbal_data,'~');
         
         for i = 1:n_robots
-            speeds = split(gimbal_data(i),',')
-            xp = str2double(speeds(1))
-            xy = str2double(speeds(2))
+            speeds = split(gimbal_data(i),',');
+            xp = str2double(speeds(1));
+            xy = str2double(speeds(2));
             up = control_calc(xdp(i),xp,k);
             uy = control_calc(xdy(i),xy,k);
-            temp = [up,uy]
+            temp = [up,uy];
             
             if(robotSelector ~= i)
                 temp = [0,0];
@@ -137,13 +145,6 @@ while 1
     end
 
    
-     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ROS SEND INFO
-    pub_msg = rosmessage(wheel_speed);
-
-    disp(speeds)
-    pub_msg.Data = speeds;
-    %pub_msg.Data = '[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]';
-    send(wheel_speed,pub_msg)
 
     disp('next blaster')
 
