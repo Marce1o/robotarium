@@ -184,8 +184,11 @@ def main():
                                 print(e)
                         
                         pitch,yaw,pitch_ground,yaw_ground_ground = robots[i].gimbal.sub_angle(freq = 1)
-
-                        tempstr = str(pitch) + "," + str(yaw)+ "~"
+                        
+                        if i != len(robots):
+                                tempstr = str(pitch) + "," + str(yaw)+ "~"
+                        else:
+                                tempstr = str(pitch) + "," + str(yaw)
 
                         gimbal_state = gimbal_state + tempstr
 
