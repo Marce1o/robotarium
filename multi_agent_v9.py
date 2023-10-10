@@ -193,9 +193,9 @@ def main():
                         print("after gimbal")
                         
                         if i != len(robots):
-                                tempstr = str(pitch) + "," + str(yaw)+ "~"
+                                tempstr = (str(pitch) + "," + str(yaw)+ "~")
                         else:
-                                tempstr = str(pitch) + "," + str(yaw)
+                                tempstr = (str(pitch) + "," + str(yaw))
 
                         gimbal_state = gimbal_state + tempstr
 
