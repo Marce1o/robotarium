@@ -97,31 +97,38 @@ while 1
     end 
 
     speed_blaster = '';
-    for i = 1:n_robots
-        temp = move_blaster(axes(1,2),axes(1,1),max_speed);
-        if(robotSelector ~= i)
-            temp = [0,0];
-        end
-        for j = 1:2
-            speed_blaster = strcat(speed_blaster,num2str(temp(j)));
-            if j ~= 2
-                speed_blaster = strcat(speed_blaster,',');
-            else
-                if i ~= n_robots
-                    speed_blaster = strcat(speed_blaster,'~');
+
+    try 
+        gimbal_data = receive(gimbal_state,100);
+
+        gimbal_data = split(gimbal_data,'~')
+        
+        for i = 1:n_robots
+            xp = gimbal_data(i)(1)
+            xy = gimbal_data(i)(2)
+            up = control_calc(xdp,xp,k);
+            uy = control_calc(xdy,xy,k);
+            temp = [up,uy]
+            
+            if(robotSelector ~= i)
+                temp = [0,0];
+            end
+            for j = 1:2
+                speed_blaster = strcat(speed_blaster,num2str(temp(j)));
+                if j ~= 2
+                    speed_blaster = strcat(speed_blaster,',');
+                else
+                    if i ~= n_robots
+                        speed_blaster = strcat(speed_blaster,'~');
+                    end
                 end
             end
-        end
-    end 
+        end 
+    catch 
+        disp("error")
+    end
 
-    gimbal_data = receive(gimbal_state,100);
-
-    gimbal_data = split(gimbal_data,'~');
-
-
-    for i in 
    
-
      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ROS SEND INFO
     pub_msg = rosmessage(wheel_speed);
 
@@ -184,9 +191,11 @@ function blaster = move_blaster(x,y,max_speed)
     else 
         blaster = [vel_p,vel_y];
     end
-
-
 end
+
+function u = control_calc(xd,x,k)
+    u = -k*(x-xd)
+end 
 
 
 function send_ros(topic,data)
