@@ -46,6 +46,7 @@ robots_data= []
 blaster_data = []
 state = " "
 
+
 def robotPublisher(SN):
        #print('publisher')
        rospy.init_node('robot_controller',anonymous=True)
@@ -122,28 +123,18 @@ def cameraProcessing(connected_robots):
                 except Exception as e: 
                        print(e)
 
-def camera_robomaster(robot,index):
-    ep_camera = robot.camera
-    ep_camera.start_video_stream(display=False, resolution=camera.STREAM_720P)
-    while True:
-           
-        ret,frame = ep_camera.read_cv2_image()
+def gimbal_publisher(gimbal_state): 
+        pub = rospy.Publisher('gimbal_state', String, queue_size=10)
+        rate = rospy.Rate(10)
+        counter = 0
+        while not rospy.is_shutdown():
+                counter = counter + 1 
+                rospy.loginfo(gimbal_state)
+                pub.publish(gimbal_state)
+                rate.sleep()
 
-        cv2.imshow(f'robot_{index}',frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'): 
-            break
-  
-    # After the loop release the cap object 
-
-    ep_camera.release() 
-    ep_camera.stop_video_stream()
-    # Destroy all the windows 
-    cv2.destroyAllWindows() 
-                        
-def gimbal_info(pitch_angle, yaw_angle, pitch_ground_angle, yaw_ground_angle):
-    print(pitch_angle, yaw_angle, pitch_ground_angle, yaw_ground_angle)
-        
+                if counter == 2:
+                        break
 
 def main():
         global state
@@ -159,45 +150,54 @@ def main():
                 print(i, robots)
 
 
-        for i in range(0,len(robots)):
-                camera_thread.append(threading.Thread(target = camera_robomaster, args=(robot[i],i,)))
+        cameraThread = threading.Thread(target = cameraProcessing, args=(robots,))
 
-                camera_thread[i].start()
+        cameraThread.start()
 
         while True:
                 dataCollector()
 
+                gimbal_state = ''
+
                 ################ Ciclo encargado de asignar los valores correspondientes de velocidad a cada robot
                 for i in range(0,len(robots)):
-                    params = []
-                    for j in range(0,4,1):
-                                try:
-                                        params.append(robots_data[i][j])
-                                except Exception as e:
-                                        print(e)
-                    try:
-                           robots[i].chassis.drive_wheels(params[0],params[1],params[2],params[3])
-                    except Exception as e:
-                            print(e)
-                    
-                    params = []
-                    for j in range(0,2,1):
-                                try:
-                                        params.append(blaster_data[i][j])
-                                except Exception as e:
-                                        print(e)
-                    try:
-                           robots[i].gimbal.drive_speed(params[0],params[1])
-                    except Exception as e:
-                            print(e)
+                        params = []
+                        for j in range(0,4,1):
+                                        try:
+                                                params.append(robots_data[i][j])
+                                        except Exception as e:
+                                                print(e)
+                        try:
+                                robots[i].chassis.drive_wheels(params[0],params[1],params[2],params[3])
+                        except Exception as e:
+                                print(e)
+                        
+                        params = []
+                        for j in range(0,2,1):
+                                        try:
+                                                params.append(blaster_data[i][j])
+                                        except Exception as e:
+                                                print(e)
+                        try:
+                                robots[i].gimbal.drive_speed(params[0],params[1])
+                        except Exception as e:
+                                print(e)
+                        
+                        pitch,yaw,pitch_ground,yaw_ground_ground = robots[i].gimbal.sub_angle(freq = 1)
 
-                    robots[i].gimbal.sub_angle(freq=1,callback=gimbal_info)
+                        tempstr = str(pitch) + "," + str(yaw)+ "~"
 
+                        gimbal_state = gimbal_state + tempstr
+
+                        print(gimbal_state)
+                
+                gimbal_publisher(gimbal_state)
 
                 if state == 'shutdown':
                         for i in range(0,len(robots),1):
                                 robots[i].chassis.drive_wheels(0,0,0,0)
                         break
+
                
                
          ################ Cierra la conexion con cada uno de los robots 
