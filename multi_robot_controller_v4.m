@@ -70,6 +70,9 @@ while 1
         lastNext = 0;
         lastPrev = 1;
     end
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Move desired blaster position 
+
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MOVEMENT MODE
 
@@ -104,10 +107,11 @@ while 1
         gimbal_data = split(gimbal_data,'~')
         
         for i = 1:n_robots
-            xp = gimbal_data(i)(1)
-            xy = gimbal_data(i)(2)
-            up = control_calc(xdp,xp,k);
-            uy = control_calc(xdy,xy,k);
+            speeds = split(gimbal_data(i),',')
+            xp = str2double(speeds(1))
+            xy = str2double(speeds(2))
+            up = control_calc(xdp(i),xp,k);
+            uy = control_calc(xdy(i),xy,k);
             temp = [up,uy]
             
             if(robotSelector ~= i)
