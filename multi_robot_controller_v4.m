@@ -34,6 +34,10 @@ max_speed = 150;
 n_robots = receive(active_robots,100);
 n_robots = n_robots.Data;
 
+%%%%%%%%%%%%%%% CONSTANTS 
+
+k = 0.72
+
 
 while 1
     [axes, buttons, ~] = read(joy);
