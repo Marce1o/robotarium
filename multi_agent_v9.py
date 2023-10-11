@@ -137,9 +137,9 @@ def gimbal_publisher(gimbal_state):
                         break
 
 
-def get_attitude():
-        print("doing callback")
-        print(pitch_angle, yaw_angle, pitch_ground_angle, yaw_ground_angle)
+def get_attitude(pitch_angle, yaw_angle, pitch_ground_angle, yaw_ground_angle):
+        print("AAAAAAAAAAAAAAAAAA")
+        return pitch_angle, yaw_angle, pitch_ground_angle, yaw_ground_angle
 
 def main():
         global state
@@ -155,9 +155,9 @@ def main():
                 print(i, robots)
 
 
-        cameraThread = threading.Thread(target = cameraProcessing, args=(robots,))
+        #cameraThread = threading.Thread(target = cameraProcessing, args=(robots,))
 
-        cameraThread.start()
+        #cameraThread.start()
 
         while True:
                 dataCollector()
@@ -189,9 +189,13 @@ def main():
                                 print(e)
                         
                         print("before gimbal")
-                        robots[i].gimbal.sub_angle(freq = 1,callback = get_attitude)
+                        robots[i].gimbal.sub_angle(1,get_attitude)
+
                         print("after gimbal")
                         
+                        pitch = 0 
+                        yaw = 0 
+
                         if i != len(robots):
                                 tempstr = (str(pitch) + "," + str(yaw)+ "~")
                         else:

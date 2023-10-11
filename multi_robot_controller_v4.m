@@ -34,9 +34,17 @@ max_speed = 150;
 n_robots = receive(active_robots,100);
 n_robots = n_robots.Data;
 
+xpd = zeros(n_robots);
+xyd = zeros(n_robots);
+
+summed_p = 0;
+summed_y = 0; 
+
 %%%%%%%%%%%%%%% CONSTANTS 
 
 k = 0.72;
+
+
 
 
 while 1
@@ -74,6 +82,27 @@ while 1
         lastNext = 0;
         lastPrev = 1;
     end
+
+    if axes(1,8) == -1 && summed_p ~= 1 && xpd(robotSelector) < 250
+        xpd(robotSelector) = xpd(robotSelector) + 10;
+        summed_p = 1;
+
+    elseif axes(1,8) == 1 && summed_p ~= 1 && xpd(robotSelector) > -250
+        xpd(robotSelector) = xpd(robotSelector) - 10;
+        summed_p = 1;
+    else
+        summed_p = 0;
+    end 
+
+    if axes(1,7) == 1 && summed_y ~= 1 && xyd(robotSelector) < 30
+        xyd(robotSelector) = xyd(robotSelector) + 5;
+        summed_y = 1;
+    elseif axes(1,7) == -1 && summed_y ~= 1 && xyd(robotSelector) > -25
+        xyd(robotSelector) = xyd(robotSelector) - 5;
+        summed_y = 1;
+    else
+        summed_y = 0;
+    end 
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Move desired blaster position 
 
@@ -113,17 +142,17 @@ while 1
 
     speed_blaster = '';
 
-    try 
+    %try 
         gimbal_data = receive(gimbal_state,100);
 
-        gimbal_data = split(gimbal_data,'~');
+        gimbal_data = split(gimbal_data.Data,'~');
         
         for i = 1:n_robots
             speeds = split(gimbal_data(i),',');
             xp = str2double(speeds(1));
             xy = str2double(speeds(2));
-            up = control_calc(xdp(i),xp,k);
-            uy = control_calc(xdy(i),xy,k);
+            up = control_calc(xpd(i),xp,k);
+            uy = control_calc(xyd(i),xy,k);
             temp = [up,uy];
             
             if(robotSelector ~= i)
@@ -140,9 +169,9 @@ while 1
                 end
             end
         end 
-    catch 
-        disp("error")
-    end
+    %catch 
+    %    disp("error")
+    %end
 
    
 
