@@ -137,10 +137,10 @@ def gimbal_publisher(gimbal_state):
                         break
 
 
-def get_attitude(pitch_angle, yaw_angle, pitch_ground_angle, yaw_ground_angle):
-        print("AAAAAAAAAAAAAAAAAA")
-        return pitch_angle, yaw_angle, pitch_ground_angle, yaw_ground_angle
-
+def get_attitude(angle_info):
+    pitch_angle, yaw_angle, pitch_ground_angle, yaw_ground_angle = angle_info
+    print("上电时刻z轴角度",yaw_ground_angle)  
+    
 def main():
         global state
 
@@ -189,7 +189,8 @@ def main():
                                 print(e)
                         
                         print("before gimbal")
-                        robots[i].gimbal.sub_angle(1,get_attitude)
+                        calbak = ""
+                        robots[i].gimbal.sub_angle(5, get_attitude)
 
                         print("after gimbal")
                         
