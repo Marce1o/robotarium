@@ -123,6 +123,21 @@ def cameraProcessing(connected_robots):
                 except Exception as e: 
                        print(e)
 
+def gimbal_thread(connected_robots):
+        while True:
+                for i in range(0,len(connected_robots)):
+
+                        pitch_angle = robots[i].gimbal.sub_angle(freq=50, callback=get_attitude)
+                        #while(pitch_angle != True):
+                        print("antes de espera")
+                        while(pitch_angle == None):
+                                time.sleep(0.01)
+                                print("espera")
+                        print(pitch_angle)
+                        print("despues de espera")
+                        robots[i].gimbal.unsub_angle()
+                        
+
 def gimbal_publisher(gimbal_state): 
         pub = rospy.Publisher('gimbal_state', String, queue_size=10)
         rate = rospy.Rate(10)
@@ -139,8 +154,10 @@ def gimbal_publisher(gimbal_state):
 
 def get_attitude(angle_info):
     pitch_angle, yaw_angle, pitch_ground_angle, yaw_ground_angle = angle_info
-    print("上电时刻z轴角度",yaw_ground_angle)  
+    print(pitch_angle,yaw_angle)
+    return(pitch_angle)
     
+
 def main():
         global state
 
@@ -159,13 +176,19 @@ def main():
 
         #cameraThread.start()
 
+        gimbalThread = threading.Thread(target = gimbal_thread, args=(robots,))
+
+        gimbalThread.start()
+
         while True:
                 dataCollector()
 
                 gimbal_state = ''
 
                 ################ Ciclo encargado de asignar los valores correspondientes de velocidad a cada robot
+                
                 for i in range(0,len(robots)):
+                        
                         params = []
                         for j in range(0,4,1):
                                         try:
@@ -188,12 +211,6 @@ def main():
                         except Exception as e:
                                 print(e)
                         
-                        print("before gimbal")
-                        calbak = ""
-                        robots[i].gimbal.sub_angle(5, get_attitude)
-
-                        print("after gimbal")
-                        
                         pitch = 0 
                         yaw = 0 
 
@@ -205,6 +222,8 @@ def main():
                         gimbal_state = gimbal_state + tempstr
 
                         #print(gimbal_state)
+                        
+
                 
                 gimbal_publisher(gimbal_state)
 
