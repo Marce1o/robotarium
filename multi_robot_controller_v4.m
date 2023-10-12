@@ -27,7 +27,7 @@ max_rpm = 100;
 doonce = 0;
 lastNext = 0;
 lastPrev = 0;
-robotSelector = 0;
+robotSelector = 1;
 
 max_speed = 150;
 
@@ -81,25 +81,23 @@ while 1
         lastPrev = 1;
     end
     
-
-
     %%%%%%%%%% CONTROLADOR
-    if axes(1,8) == -1 && summed_p ~= 1 && xpd(robotSelector) < 250
-        xpd(robotSelector) = xpd(robotSelector) + 10;
+    if axes(1,8) == -1 && summed_p ~= 1 && xpd(robotSelector) < 30
+        xpd(robotSelector) = xpd(robotSelector) + 5;
         summed_p = 1;
 
-    elseif axes(1,8) == 1 && summed_p ~= 1 && xpd(robotSelector) > -250
-        xpd(robotSelector) = xpd(robotSelector) - 10;
+    elseif axes(1,8) == 1 && summed_p ~= 1 && xpd(robotSelector) > -25
+        xpd(robotSelector) = xpd(robotSelector) - 5;
         summed_p = 1;
     else
         summed_p = 0;
     end 
 
-    if axes(1,7) == 1 && summed_y ~= 1 && xyd(robotSelector) < 30
-        xyd(robotSelector) = xyd(robotSelector) + 5;
+    if axes(1,7) == 1 && summed_y ~= 1 && xyd(robotSelector) < 250
+        xyd(robotSelector) = xyd(robotSelector) + 10;
         summed_y = 1;
-    elseif axes(1,7) == -1 && summed_y ~= 1 && xyd(robotSelector) > -25
-        xyd(robotSelector) = xyd(robotSelector) - 5;
+    elseif axes(1,7) == -1 && summed_y ~= 1 && xyd(robotSelector) > -250
+        xyd(robotSelector) = xyd(robotSelector) - 10;
         summed_y = 1;
     else
         summed_y = 0;
@@ -136,7 +134,7 @@ while 1
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ROS SEND INFO
     pub_msg = rosmessage(wheel_speed);
 
-    disp(speeds)
+    %disp(speeds)
     pub_msg.Data = speeds;
     %pub_msg.Data = '[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]';
     send(wheel_speed,pub_msg)
@@ -154,6 +152,8 @@ while 1
             xy = str2double(speeds(2));
             up = control_calc(xpd(i),xp,k);
             uy = control_calc(xyd(i),xy,k);
+            disp(xpd)
+            disp(xyd)
             temp = [up,uy];
             
             if(robotSelector ~= i)
@@ -176,9 +176,9 @@ while 1
 
    
 
-    disp('next blaster')
+    %disp('next blaster')
 
-    disp(speed_blaster)
+    %disp(speed_blaster)
     pub_msg = rosmessage(blaster_speed);
     pub_msg.Data = speed_blaster;
     send(blaster_speed,pub_msg)

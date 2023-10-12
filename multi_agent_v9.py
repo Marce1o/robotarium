@@ -46,7 +46,10 @@ robots_data= []
 blaster_data = []
 state = " "
 
+pitch_angle = 0
+yaw_angle  = 0
 
+################### ROS FUNCTIONS
 def robotPublisher(SN):
        #print('publisher')
        rospy.init_node('robot_controller',anonymous=True)
@@ -63,7 +66,6 @@ def robotPublisher(SN):
                 if counter == 10:
                         break
 
-################ Funcion encargada de obtener la informacion de los robots
 def robots_data_collector(msg):
         global robots_data
         robots_data = msg.data.split("~")
@@ -94,8 +96,6 @@ def stateCollector(msg):
         global state
         state = msg.data 
 
-
-################ Function que configura los topics de ros a leer 
 def dataCollector():
         rospy.init_node('robot_controller',anonymous=True)
         rospy.Subscriber("state",String,stateCollector)
@@ -103,6 +103,9 @@ def dataCollector():
         rospy.Subscriber('blaster',String,blaster_data_collector)
         rospy.sleep(0.2)
 
+#################################################
+
+################### CAMERA FUNCTIONS
 def cameraProcessing(connected_robots):
     
     while True:
@@ -122,22 +125,35 @@ def cameraProcessing(connected_robots):
                         
                 except Exception as e: 
                        print(e)
+#################################################
 
+###################  GIMBAL FUNCTIONS
 def gimbal_thread(connected_robots):
+        global pitch_angle,yaw_angle
+
+        gimbal_state = ""
         while True:
-                for i in range(0,len(connected_robots)):
+                gimbal_state = ""
+                try: 
+                        for i in range(0,len(connected_robots),1):
+                                robot_num = i
+                                connected_robots[i].gimbal.sub_angle(freq=50, callback=get_attitude)
+                                time.sleep(0.1)
+                                connected_robots[i].gimbal.unsub_angle()
+                                
+                                if i != len(connected_robots):
+                                        tempstr = (str(pitch_angle) + "," + str(yaw_angle)+ "~")
+                                else:
+                                        tempstr = (str(pitch_angle) + "," + str(yaw_angle))
 
-                        pitch_angle = robots[i].gimbal.sub_angle(freq=50, callback=get_attitude)
-                        #while(pitch_angle != True):
-                        print("antes de espera")
-                        while(pitch_angle == None):
-                                time.sleep(0.01)
-                                print("espera")
-                        print(pitch_angle)
-                        print("despues de espera")
-                        robots[i].gimbal.unsub_angle()
+                                gimbal_state = gimbal_state + tempstr
+
+
+                        gimbal_publisher(gimbal_state)
+
+                except Exception as e: 
+                        print(e)
                         
-
 def gimbal_publisher(gimbal_state): 
         pub = rospy.Publisher('gimbal_state', String, queue_size=10)
         rate = rospy.Rate(10)
@@ -151,17 +167,17 @@ def gimbal_publisher(gimbal_state):
                 if counter == 2:
                         break
 
-
 def get_attitude(angle_info):
-    pitch_angle, yaw_angle, pitch_ground_angle, yaw_ground_angle = angle_info
-    print(pitch_angle,yaw_angle)
-    return(pitch_angle)
     
+    global pitch_angle, yaw_angle
 
+    pitch_angle,yaw_angle,pitch_ground_angle, yaw_ground_angle = angle_info
+
+    print(f"this is {pitch_angle}, {yaw_angle}")
+
+#################################################
 def main():
         global state
-
-        camera_thread = []
 
         ################ Inicializacion de los robots 
         for i in range(0,len(SN),1):
@@ -171,13 +187,10 @@ def main():
                 print(f"robot con sn {SN[i]} inicializado")
                 print(i, robots)
 
-
         #cameraThread = threading.Thread(target = cameraProcessing, args=(robots,))
-
         #cameraThread.start()
-
+        
         gimbalThread = threading.Thread(target = gimbal_thread, args=(robots,))
-
         gimbalThread.start()
 
         while True:
@@ -194,46 +207,36 @@ def main():
                                         try:
                                                 params.append(robots_data[i][j])
                                         except Exception as e:
-                                                print(e)
+                                                pass
+                                                #print(e)
                         try:
                                 robots[i].chassis.drive_wheels(params[0],params[1],params[2],params[3])
                         except Exception as e:
-                                print(e)
+                                pass
+                                #print(e)
                         
                         params = []
                         for j in range(0,2,1):
                                         try:
                                                 params.append(blaster_data[i][j])
                                         except Exception as e:
-                                                print(e)
+                                                pass
+                                                #print(e)
                         try:
                                 robots[i].gimbal.drive_speed(params[0],params[1])
                         except Exception as e:
-                                print(e)
+                                #print(e)
+                                pass
                         
                         pitch = 0 
                         yaw = 0 
 
-                        if i != len(robots):
-                                tempstr = (str(pitch) + "," + str(yaw)+ "~")
-                        else:
-                                tempstr = (str(pitch) + "," + str(yaw))
-
-                        gimbal_state = gimbal_state + tempstr
-
-                        #print(gimbal_state)
-                        
-
-                
-                gimbal_publisher(gimbal_state)
 
                 if state == 'shutdown':
                         for i in range(0,len(robots),1):
                                 robots[i].chassis.drive_wheels(0,0,0,0)
                         break
 
-               
-               
          ################ Cierra la conexion con cada uno de los robots 
         for i in range(1,len(robots),1):
                 robots[i-1].close()
