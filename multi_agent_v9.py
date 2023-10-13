@@ -106,25 +106,59 @@ def dataCollector():
 #################################################
 
 ################### CAMERA FUNCTIONS
-def cameraProcessing(connected_robots):
+# def cameraProcessing(connected_robots):
     
-    while True:
-        for i in range(0,len(connected_robots),1):
-                ep_camera = connected_robots[i].camera
+#     while True:
+#         for i in range(0,len(connected_robots),1):
+#                 ep_camera = connected_robots[i].camera
 
-                try: 
-                        ep_camera.start_video_stream(display=False, resolution=camera.STREAM_720P)
-                        time.sleep(0.1)
-                        img = ep_camera.read_cv2_image()
-                        ep_camera.stop_video_stream()
-                        dimensions = img.shape
+#                 try: 
+#                         start = time.time()
+#                         ep_camera.start_video_stream(display=False, resolution=camera.STREAM_720P)
+#                         img = ep_camera.read_cv2_image()
+#                         ep_camera.stop_video_stream()
+#                         #dimensions = img.shape
 
-                        cv2.imwrite(f"robo{i}_img.png", img)
-                        print(f"Image dimensions of {i}: {dimensions}")
+#                         #cv2.imwrite(f"robo{i}_img.png", img)
+#                         #print(f"Image dimensions of {i}: {dimensions}")
 
+#                         end = time.time()
+
+#                         time_elapsed = end - start 
+
+#                         print(f"Time elapsed: {time_elapsed}")
                         
-                except Exception as e: 
-                       print(e)
+#                 except Exception as e: 
+#                        print(e)
+
+
+def cameraProcessing(connected_robots): 
+        cameras = []
+        for i in range(0,len(connected_robots),1):
+                cameras.append(connected_robots[i].camera)
+                cameras[i].start_video_stream(display=False, resolution=camera.STREAM_720P)
+
+        while True: 
+                for i in range(0,len(connected_robots),1): 
+                        try: 
+                                start = time.time()
+                                img = cameras[i].read_cv2_image()
+                                #dimensions = img.shape
+
+                                #cv2.imwrite(f"robo{i}_img.png", img)
+                                cv2.imshow(f"robo_window_{i}",img)
+                                #print(f"Image dimensions of {i}: {dimensions}")
+
+                                end = time.time()
+
+                                time_elapsed = end - start 
+                                #print(f"Time elapsed: {time_elapsed}")
+
+                                cv2.waitKey(1)
+                        
+                        except Exception as e: 
+                                print(e)
+
 #################################################
 
 ###################  GIMBAL FUNCTIONS
@@ -138,7 +172,7 @@ def gimbal_thread(connected_robots):
                         for i in range(0,len(connected_robots),1):
                                 robot_num = i
                                 connected_robots[i].gimbal.sub_angle(freq=50, callback=get_attitude)
-                                time.sleep(0.1)
+                                time.sleep(0.15)
                                 connected_robots[i].gimbal.unsub_angle()
                                 
                                 if i != len(connected_robots):
@@ -173,7 +207,7 @@ def get_attitude(angle_info):
 
     pitch_angle,yaw_angle,pitch_ground_angle, yaw_ground_angle = angle_info
 
-    print(f"this is {pitch_angle}, {yaw_angle}")
+    #print(f"this is {pitch_angle}, {yaw_angle}")
 
 #################################################
 def main():
@@ -187,8 +221,8 @@ def main():
                 print(f"robot con sn {SN[i]} inicializado")
                 print(i, robots)
 
-        #cameraThread = threading.Thread(target = cameraProcessing, args=(robots,))
-        #cameraThread.start()
+        cameraThread = threading.Thread(target = cameraProcessing, args=(robots,))
+        cameraThread.start()
         
         gimbalThread = threading.Thread(target = gimbal_thread, args=(robots,))
         gimbalThread.start()

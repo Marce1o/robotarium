@@ -43,6 +43,7 @@ summed_y = 0;
 %%%%%%%%%%%%%%% CONSTANTS 
 
 k = 0.72;
+gimbal_vmax = 180;
 
 
 while 1
@@ -150,8 +151,8 @@ while 1
             speeds = split(gimbal_data(i),',');
             xp = str2double(speeds(1));
             xy = str2double(speeds(2));
-            up = control_calc(xpd(i),xp,k);
-            uy = control_calc(xyd(i),xy,k);
+            up = control_calc(xpd(i),xp,gimbal_vmax);
+            uy = control_calc(xyd(i),xy,gimbal_vmax);
             disp(xpd)
             disp(xyd)
             temp = [up,uy];
@@ -233,7 +234,11 @@ function blaster = move_blaster(x,y,max_speed)
 end
 
 function u = control_calc(xd,x,k)
-    u = -k*(x-xd)
+    %u = -0.72*(x-xd);
+    
+    e = (x - xd)/180
+    u = -k*tanh(e)
+
 end 
 
 
