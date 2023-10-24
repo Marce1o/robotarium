@@ -29,11 +29,13 @@ for i in range(0,len(listaDeConectados)):
 
 ################ Declaracion SN de los robots
 tempSN = ["3JKCK6U0030A54","3JKCK1600303QV","3JKCK6U0030AC4","3JKCK1600303EM","3JKCK1600302LH","3JKCK1600303P6","3JKCK1600303P6"]
+robots_name= []
 SN = []
 
 ################ Añadir SN que se encuentran conectadas 
 for i in range(0,len(tempSN)):
     if tempSN[i] in listaDeConectados:
+        robots_name.append(f'rm_{i}')
         SN.append(tempSN[i])
 
 print(SN)
@@ -50,20 +52,19 @@ pitch_angle = 0
 yaw_angle  = 0
 
 ################### ROS FUNCTIONS
-def robotPublisher(SN):
+def robotPublisher(names):
        #print('publisher')
        rospy.init_node('robot_controller',anonymous=True)
-       pub = rospy.Publisher('robots', Int16, queue_size=10)
-       n_robots = len(SN)
+       pub = rospy.Publisher('robots', String, queue_size=10)
        rate = rospy.Rate(10)
        counter = 0
        while not rospy.is_shutdown():
                 counter = counter + 1 
-                rospy.loginfo(n_robots)
-                pub.publish(n_robots)
+                rospy.loginfo(names)
+                pub.publish(names)
                 rate.sleep()
 
-                if counter == 10:
+                if counter == 5:
                         break
 
 def robots_data_collector(msg):
@@ -263,6 +264,6 @@ def main():
 
                 
 if __name__ == '__main__':
-        robotPublisher(SN)
+        robotPublisher(robots_name)
         print("done publishing")
         main()
