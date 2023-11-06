@@ -85,14 +85,15 @@ while buttons(1,2) == 0
 
         %%%%% ROBOT CONTROL
         disp('receiving data')
-        data = receive(robot_topics("HexaTilted"),100);
-
+        data = receive(robot_topics("HexaTilted"),10);
+        
 
         robot_pose = getPose(data);
+        robot_pose
        
-        ux = speed_controller(robot_pose(1),dx(robot_number),max_linear)
-        uy = speed_controller(robot_pose(2),dy(robot_number),max_linear)
-        uw = speed_controller(robot_pose(4),dtheta(robot_number),max_theta)
+        ux = speed_controller(robot_pose(1),dx(robot_number),max_linear);
+        uy = speed_controller(robot_pose(2),dy(robot_number),max_linear);
+        uw = speed_controller(robot_pose(4),dtheta(robot_number),max_theta);
 
         speed_vec = [-uy;-ux;uw];
 
@@ -124,7 +125,7 @@ while buttons(1,2) == 0
     
     %%%%%%%%%%%%%%%%%%%%%%% ENVIA INFORMACION 
     %%%% ENVIA ROBOTS
-    send_ros(pub_wheel_speed,robot_speeds)
+    %send_ros(pub_wheel_speed,robot_speeds)
 
     % %%%% ENVIA GIMBAL
     % send_ros(pub_gimbal_speed,gimbal_speeds)

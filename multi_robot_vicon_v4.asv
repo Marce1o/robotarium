@@ -16,8 +16,8 @@ state_publisher = rospublisher("/state","std_msgs/String","DataFormat","struct")
 
 
 %%%% ROS SUBSCRIBERS 
-active_robots = rossubscriber("/robot_names","std_msgs/String","DataFormat","struct");
-pause(1)
+% active_robots = rossubscriber("/robot_names","std_msgs/String","DataFormat","struct");
+% pause(1)
 % gimbal_state = rossubscriber("/gimbal_state","std_msgs/String","DataFormat","struct");
 % pause(1)
 
@@ -62,7 +62,7 @@ for i = 1:robot_number
     sub_topic = "/vicon/"+robot_names(i)+"/"+robot_names(i);
     subscriber = rossubscriber(sub_topic,"geometry_msgs/TransformStamped");
     robot_topics(robot_names(i)) = subscriber;   
-    disp(robot_topics("HexaTilted"))
+    
     pause(1)
 
 
@@ -85,7 +85,7 @@ while buttons(1,2) == 0
 
         %%%%% ROBOT CONTROL
         disp('receiving data')
-        data = receive(robot_topics("HexaTilted"),100);
+        data = receive(robot_topics(robot_names(i)),10);
 
 
         robot_pose = getPose(data);
