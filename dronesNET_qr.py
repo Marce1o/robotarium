@@ -10,7 +10,9 @@ QRCODE_NAME = "qrcode.png"
 if __name__ == '__main__':
 
     helper = conn.ConnectionHelper()
-    info = helper.build_qrcode_string(ssid="drones", password="dronesLab")
+    #info = helper.build_qrcode_string(ssid="drones", password="dronesLab")
+    #info = helper.build_qrcode_string(ssid="red2", password="224426628816")
+    info = helper.build_qrcode_string(ssid="Moto G8 plus", password="123456789")
     myqr.run(words=info)
     time.sleep(1)
     img = Image.open(QRCODE_NAME)   

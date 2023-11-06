@@ -1,9 +1,8 @@
 import time
 from robomaster import robot, conn, camera
 import rospy
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Quaternion
 from std_msgs.msg import String
-from std_msgs.msg import Int16
 import threading
 import cv2
 import yaml 
@@ -55,6 +54,7 @@ state = " "
 pitch_angle = 0
 yaw_angle  = 0
 
+robot_speeds = {}
 ################### ROS FUNCTIONS
 def robotPublisher(names):
        #print('publisher')
@@ -203,61 +203,77 @@ def get_attitude(angle_info):
 
     #print(f"this is {pitch_angle}, {yaw_angle}, {responseCounter}")
 
+def robot_asign(msg):
+        global name,robot_speeds
+        robot_speeds[name] = [msg.x,msg.y,msg.z,msg.w]
+
+def robot_info(robots_names): 
+        global name
+        for robot in robots_names: 
+                name = robot
+                rospy.Subscriber(f"{robot}/wheels",Quaternion ,robot_asign)
+
 #################################################
 def main():
-        global state
+        global state, robot_speeds
 
         ################ Inicializacion de los robots 
         for i in range(0,len(SN),1):
                 print(f"intentando {SN[i]}")
                 robots.append(robot.Robot())
                 robots[i].initialize(conn_type="sta",sn=SN[i])
+                robot_speeds[robot_names[i]] = [0,0,0,0]
                 print(f"robot con sn {SN[i]} inicializado")
                 print(i, robots)
 
         cameraThread = threading.Thread(target = cameraProcessing, args=(robots,))
         cameraThread.start()
         
-        gimbalThread = threading.Thread(target = gimbal_thread, args=(robots,))
-        gimbalThread.start()
+        #gimbalThread = threading.Thread(target = gimbal_thread, args=(robots,))
+        #gimbalThread.start()
 
         while True:
-                dataCollector()
+                #dataCollector()
+
+                robot_info(robot_names)
 
                 gimbal_state = ''
 
                 ################ Ciclo encargado de asignar los valores correspondientes de velocidad a cada robot
                 
                 for i in range(0,len(robots)):
+
+                        params = robot_speeds[robot_names[i]]
+                        robots[i].chassis.drive_wheels(params[0],params[1],params[2],params[3])
+                        # params = []
+                        # for j in range(0,4,1):
+                        #                 try:
+                        #                         params.append(robots_data[i][j])
+                        #                 except Exception as e:
+                        #                         pass
+                        #                         #print(e)
+                        # try:
+                        #         robots[i].chassis.drive_wheels(params[0],params[1],params[2],params[3])
+                        # except Exception as e:
+                        #         pass
+                        #         #print(e)
                         
-                        params = []
-                        for j in range(0,4,1):
-                                        try:
-                                                params.append(robots_data[i][j])
-                                        except Exception as e:
-                                                pass
-                                                #print(e)
-                        try:
-                                robots[i].chassis.drive_wheels(params[0],params[1],params[2],params[3])
-                        except Exception as e:
-                                pass
-                                #print(e)
+                        #params = []
+                        # for j in range(0,2,1):
+                        #                 try:
+                        #                         params.append(blaster_data[i][j])
+                        #                 except Exception as e:
+                        #                         pass
+                        #                         #print(e)
+
+                        # try:
+                        #         robots[i].gimbal.drive_speed(params[0],params[1])
+                        # except Exception as e:
+                        #         #print(e)
+                        #         pass
                         
-                        params = []
-                        for j in range(0,2,1):
-                                        try:
-                                                params.append(blaster_data[i][j])
-                                        except Exception as e:
-                                                pass
-                                                #print(e)
-                        try:
-                                robots[i].gimbal.drive_speed(params[0],params[1])
-                        except Exception as e:
-                                #print(e)
-                                pass
-                        
-                        pitch = 0 
-                        yaw = 0 
+                        # pitch = 0 
+                        # yaw = 0 
 
 
                 if state == 'shutdown':
