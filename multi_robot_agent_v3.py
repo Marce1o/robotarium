@@ -2,6 +2,7 @@ import time
 from robomaster import robot, conn, camera
 import rospy
 from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Point
 from std_msgs.msg import String
 import threading
 import cv2
@@ -55,6 +56,7 @@ pitch_angle = 0
 yaw_angle  = 0
 
 robot_speeds = {}
+gimbal_speeds = {}
 ################### ROS FUNCTIONS
 def robotPublisher(names):
        #print('publisher')
@@ -73,45 +75,16 @@ def robotPublisher(names):
                 if counter == 10:
                         break
 
-def robots_data_collector(msg):
-        global robots_data
-        robots_data = msg.data.split("~")
-        temp=robots_data
-        robots_data = []
-        for i in range(0,len(temp),1):
-                data = temp[i].split(",")
-                toappend = []
-                for j in range(0,len(data),1):
-                        toappend.append(float(data[j]))
-                robots_data.append(toappend)
-        #print(robots_data)
-
-def blaster_data_collector(msg):
-        global blaster_data
-        blaster_data = msg.data.split('~')
-
-        temp=blaster_data
-        blaster_data = []
-        for i in range(0,len(temp),1):
-                data = temp[i].split(",")
-                toappend = []
-                for j in range(0,len(data),1):
-                        toappend.append(float(data[j]))
-                blaster_data.append(toappend)
-
 def stateCollector(msg):
         global state
         state = msg.data 
 
 def dataCollector():
         rospy.Subscriber("state",String,stateCollector)
-        rospy.Subscriber("robots_data",String,robots_data_collector)
-        rospy.Subscriber('blaster',String,blaster_data_collector)
+        #rospy.Subscriber("robots_data",String,robots_data_collector)
+        #rospy.Subscriber('blaster',String,blaster_data_collector)
         rospy.sleep(0.2)
 
-def robotDataCollector(name): 
-        rospy.Subscriber(f'{name}/wheel_speed')
-        rospy.sleep(0.1)
 
 #################################################
 
@@ -204,15 +177,18 @@ def get_attitude(angle_info):
 
     #print(f"this is {pitch_angle}, {yaw_angle}, {responseCounter}")
 
-def robot_asign(msg):
+def robot_assign(msg):
         global name,robot_speeds
         robot_speeds[name] = [msg.x,msg.y,msg.z,msg.w]
 
-def robot_info(robots_names): 
-        global name
-        for robot in robots_names: 
-                name = robot
-                rospy.Subscriber(f"{robot}/wheels",Quaternion ,robot_asign)
+def gimbal_assign(msg):
+        global name,gimbal_speeds
+        gimbal_speeds[name] = [msg.x,msg.y]
+
+def robot_info(name): 
+        rospy.Subscriber(f"{name}/wheels",Quaternion,robot_assign)
+        rospy.Subscriber(f"{name}/gimbal",Point,gimbal_assign)
+        rospy.sleep(0.1)
 
 #################################################
 def main():
@@ -224,19 +200,22 @@ def main():
                 robots.append(robot.Robot())
                 robots[i].initialize(conn_type="sta",sn=SN[i])
                 robot_speeds[robot_names[i]] = [0,0,0,0]
+                gimbal_speeds[robot_names[i]] = [0,0]
                 print(f"robot con sn {SN[i]} inicializado")
                 print(i, robots)
 
         cameraThread = threading.Thread(target = cameraProcessing, args=(robots,))
         cameraThread.start()
         
-        #gimbalThread = threading.Thread(target = gimbal_thread, args=(robots,))
-        #gimbalThread.start()
+        gimbalThread = threading.Thread(target = gimbal_thread, args=(robots,))
+        gimbalThread.start()
 
         while True:
                 #dataCollector()
 
-                robot_info(robot_names)
+                for robot in robot_names:
+                       name = robot
+                       robot_info(robot)
 
                 gimbal_state = ''
 
@@ -244,26 +223,11 @@ def main():
                 
                 for i in range(0,len(robots)):
 
-                        params = robot_speeds[robot_names[i]]
-                        robots[i].chassis.drive_wheels(params[0],params[1],params[2],params[3])
+                        r_params = robot_speeds[robot_names[i]]
+                        robots[i].chassis.drive_wheels(r_params[0],r_params[1],r_params[2],r_params[3])
                         
-                        #params = []
-                        # for j in range(0,2,1):
-                        #                 try:
-                        #                         params.append(blaster_data[i][j])
-                        #                 except Exception as e:
-                        #                         pass
-                        #                         #print(e)
-
-                        # try:
-                        #         robots[i].gimbal.drive_speed(params[0],params[1])
-                        # except Exception as e:
-                        #         #print(e)
-                        #         pass
-                        
-                        # pitch = 0 
-                        # yaw = 0 
-
+                        g_params = gimbal_speeds[robot_names[i]]
+                        robots[i].gimbal.drive_speed(g_params[0],g_params[1])
 
                 if state == 'shutdown':
                         for i in range(0,len(robots),1):
