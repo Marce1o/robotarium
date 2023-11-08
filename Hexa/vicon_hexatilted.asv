@@ -11,6 +11,22 @@ rosinit
 state_publisher = rospublisher("/state","std_msgs/String","DataFormat","struct");
 
 %%%% ROBOT VARIABLES 
+
+
+
+
+
+wsxwqxwad
+w
+
+
+
+
+
+
+
+
+
 robot_names = "HexaTilted";
 robot_names = split(robot_names);
 

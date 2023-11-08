@@ -8,42 +8,35 @@ rosshutdown
 rosinit 
 
 %%%% ROS PUBLISHERS 
-state_publisher = rospublisher("/state","std_msgs/String","DataFormat","struct");
-
+% state_publisher = rospublisher("/state","std_msgs/String","DataFormat","struct");
+% 
 %%%% ROBOT VARIABLES 
-robot_names = "HexaTilted";
-robot_names = split(robot_names);
+% robot_names = "HexaTilted";
+% robot_names = split(robot_names);
+% 
+% robot_number = length(robot_names);
+% 
+% robot_topics = dictionary; 
+% 
+% for i = 1:robot_number
+%     sub_topic = "/vicon/"+robot_names(i)+"/"+robot_names(i);
+%     subscriber = rossubscriber(sub_topic,"geometry_msgs/TransformStamped");
+%     robot_topics(robot_names(i)) = subscriber;   
+% end
+% 
+% obj = struct('Names', robot_names,...
+%              'Number', robot_number,...
+%              'Topics', robot_topics(robot_names));
+% 
+% tf = 10;
+% 
+% for i = 1:10
+%     [pos, BF_att] = get_Vicon_data(obj);
+%     disp(pos)
+% end
 
-robot_number = length(robot_names);
+tf = Inf;
+open_system('vicon_hexatilted_read')
+sim("vicon_hexatilted_read.slx")
 
-robot_topics = dictionary; 
-
-for i = 1:robot_number
-    sub_topic = "/vicon/"+robot_names(i)+"/"+robot_names(i);
-    subscriber = rossubscriber(sub_topic,"geometry_msgs/TransformStamped");
-    robot_topics(robot_names(i)) = subscriber;   
-end
-
-obj = struct('Names', robot_names,...
-             'Number', robot_number,...
-             'Topics', robot_topics(robot_names));
-
-tf = 10;
-
-for i = 1:10
-    [pos, BF_att] = get_Vicon_data(obj);
-    disp(pos)
-end
-
-% open_system('vicon_hexatilted_read')
-% sim("vicon_hexatilted_read.slx")
-
-send_ros(state_publisher,'shutdown')
 rosshutdown
-
-function send_ros(topic,data)
-    pub_msg = rosmessage(topic);
-    pub_msg.Data = data;
-    send(topic,pub_msg)
-    
-end
