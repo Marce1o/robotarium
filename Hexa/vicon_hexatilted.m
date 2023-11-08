@@ -5,7 +5,7 @@ clear, clc
 % 
 % rosinit 
 
-sigmanoise = 0.00000005;
+sigmanoise = 0.0000001;
 
 tf = 3;
 open_system('vicon_hexatilted_read')
