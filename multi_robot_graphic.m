@@ -11,6 +11,9 @@ ID = 1;
 joy=vrjoystick(ID);
 
 
+updatefreq = 30;
+dt = 1/updatefreq;
+
 %%%% ROS PUBLISHERS 
 state_publisher = rospublisher("/state","std_msgs/String","DataFormat","struct");
 
@@ -26,7 +29,7 @@ pause(1)
 %robot_names = receive(active_robots,100);
 %robot_names = robot_names.Data
 
-robot_names = "rm_5";
+robot_names = "rm_3";
 robot_names = split(robot_names);
 
 robot_number = length(robot_names);
@@ -36,16 +39,18 @@ wheel_publishers = dictionary;
 
 dx = zeros(robot_number);
 dy = zeros(robot_number);
-dx(1) = 0;
-dy(1) = 0;
+dx(1) = -0.5;
+dy(1) = 0.5;
 dtheta = zeros(robot_number);
+dtheta(1) = pi
+%dtheta(1) = 1.57;
 
 wheel_radius = 0.05;
 robot_l = 0.10;
 robot_w = 0.10;
 
-matrix = 1/wheel_radius*[1 -1 -(robot_l+robot_w); 1 1 (robot_l+robot_w); 1 -1 (robot_l+robot_w); 1 1 -(robot_l+robot_w)];
-
+%matrix = 1/wheel_radius*[1 -1 -(robot_l+robot_w); 1 1 (robot_l+robot_w); 1 -1 (robot_l+robot_w); 1 1 -(robot_l+robot_w)]
+matrix = 1/wheel_radius*[1 1 (robot_l+robot_w); 1 -1 -(robot_l+robot_w); 1 1 -(robot_l+robot_w); 1 -1 (robot_l+robot_w)]
 
 %%%% GIMBAL VARIABLES4906586
 xpd = zeros(robot_number);
@@ -55,7 +60,7 @@ max_gimbal_speed = 180;
 
 
 %%%% SPEED CONSTANTS 
-max_linear = 0.9;
+max_linear = 0.5;
 max_theta = 2.4906586;
 
 for i = 1:robot_number
@@ -72,7 +77,12 @@ end
 
 [axes, buttons, ~] = read(joy);
 
+
+k = 1;
+
 while buttons(1,2) == 0
+
+    time(k) = (k-1)*dt;
 
     robot_speeds = '';
 
@@ -83,23 +93,31 @@ while buttons(1,2) == 0
     for i = 1:robot_number
 
         %%%%% ROBOT CONTROL
-        disp('receiving data')
-        data = receive(robot_topics("HexaTilted"),100);
+        data = receive(robot_topics(robot_names(i)),100);
 
 
         robot_pose = getPose(data);
-       
+        
+        xpos(k) = robot_pose(1);
+
+        ypos(k) = robot_pose(2);
+        thetapos(k) = robot_pose(4);
+        
         ux = speed_controller(robot_pose(1),dx(robot_number),max_linear)
         uy = speed_controller(robot_pose(2),dy(robot_number),max_linear)
         uw = speed_controller(robot_pose(4),dtheta(robot_number),max_theta)
 
-        speed_vec = [-uy;-ux;uw];
 
-        wheelSpeed = matrix*speed_vec;
+
+        %speed_vec = [-uy;-ux;uw];
+
+        speed_vec = [ux;uy;uw];
+
+        wheelSpeed = matrix*speed_vec
 
         wheelSpeed = wheelSpeed*(30/pi);
 
-        temp = transpose(wheelSpeed)
+        temp = transpose(wheelSpeed);
 
         send_twist(wheel_publishers(robot_names(i)),temp)
            
@@ -108,7 +126,7 @@ while buttons(1,2) == 0
 
         % %%%%% GIMBAL CONTROL
         % 
-        % [axes, buttons, ~] = read(joy);
+        [axes, buttons, ~] = read(joy);
         % 
         % g_speed = split(gimbal_data(i),',');
         % xp = str2double(g_speed(1));
@@ -123,16 +141,33 @@ while buttons(1,2) == 0
     
     %%%%%%%%%%%%%%%%%%%%%%% ENVIA INFORMACION 
     %%%% ENVIA ROBOTS
-    send_ros(pub_wheel_speed,robot_speeds)
+    %send_ros(pub_wheel_speed,robot_speeds)
 
     % %%%% ENVIA GIMBAL
     % send_ros(pub_gimbal_speed,gimbal_speeds)
+    pause(dt)
+    k = k + 1;
 
 
 end  
 
 send_ros(state_publisher,'shutdown')
 rosshutdown
+
+figure
+plot(time,xpos)
+title('x-position')
+
+figure
+plot(time,ypos)
+title('y-position')
+
+figure
+plot(time,thetapos)
+title('theta-position')
+
+
+
 
 function pose = getPose(data)
 
@@ -152,10 +187,10 @@ function pose = getPose(data)
 
 end 
 
-function u = speed_controller(c,d,k)
-    e = (c - d)/k;
+function u = speed_controller(c,d,k1)
+    e = (c - d);
     %disp(-200*tanh(e))
-    u = k*tanh(e);
+    u = -k1*tanh(2*e);
 
 end
 
