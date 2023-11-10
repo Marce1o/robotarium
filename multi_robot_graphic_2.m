@@ -53,7 +53,9 @@ matrix = 1/wheel_radius*[1 1 (robot_l+robot_w); 1 -1 -(robot_l+robot_w); 1 1 -(r
 xpd = zeros(robot_number);
 xyd = zeros(robot_number);
 
-max_gimbal_speed = 180;
+xyd(1) = 5
+
+max_gimbal_speed = 90;
 
 
 %%%% SPEED CONSTANTS 
@@ -66,8 +68,8 @@ for i = 1:robot_number
     robot_topics(robot_names(i)) = subscriber;   
     pause(1)
 
-    sub_topic = "/"+robot_number(i)+"/gimbal";
-    subscriber = rossubscriber(sub_topic,"geometry_msgs/Point");
+    sub_topic = "/vicon/gimbal_"+robot_names(i)+"/gimbal_"+robot_names(i);
+    subscriber = rossubscriber(sub_topic,"geometry_msgs/TransformStamped");
     gimbal_topics(robot_names(i)) = subscriber;
     pause(1)
 
@@ -75,7 +77,7 @@ for i = 1:robot_number
     wheel_publishers(robot_names(i)) = rospublisher(string(robot_names(i))+'/wheels',"geometry_msgs/Quaternion");
     pause(0.5)
 
-    gimbal_publishers(robot_number(i)) = rospublisher(string(robot_names(i))+'/gimbal_speed',"geometry_msgs/Point");
+    gimbal_publishers(robot_names(i)) = rospublisher(string(robot_names(i))+'/gimbal_speed',"geometry_msgs/Point");
     pause(0.5)
 end
 
@@ -99,6 +101,7 @@ while buttons(1,2) == 0
 
 
         robot_pose = getPose(pose_data);
+        gimbal_orientation = getOrientation(gimbal_data);
         
         xpos(k) = robot_pose(1);
         ypos(k) = robot_pose(2);
@@ -120,29 +123,24 @@ while buttons(1,2) == 0
 
       
         [axes, buttons, ~] = read(joy);
-        xp = gimbal_data.x;
-        xy = gimbal_data.y;
-        up = control_calc(xpd(i),xp,max_gimbal_speed);
-        uy = control_calc(xyd(i),xy,max_gimbal_speed);
-        gimbal_temp = [up,uy];
+        uy = speed_controller_gimbal(xyd(i),abs(gimbal_orientation(1)),max_gimbal_speed)
+        %up = speed_controller_gimbal(xpd(i),gimbal_orientation(2),max_gimbal_speed)
+        
+        gimbal_temp = [0,-uy];
+        
          
         send_twist(wheel_publishers(robot_names(i)),robot_temp)
         send_point(gimbal_publishers(robot_names(i)),gimbal_temp)
 
     end
     
-    %%%%%%%%%%%%%%%%%%%%%%% ENVIA INFORMACION 
-    %%%% ENVIA ROBOTS
-    %send_ros(pub_wheel_speed,robot_speeds)
-
-    % %%%% ENVIA GIMBAL
-    % send_ros(pub_gimbal_speed,gimbal_speeds)
     pause(dt)
     k = k + 1;
 
 
 end  
-
+send_twist(wheel_publishers(robot_names(i)),[0,0,0,0])
+send_point(gimbal_publishers(robot_names(i)),[0,0])
 send_ros(state_publisher,'shutdown')
 rosshutdown
 
@@ -177,10 +175,33 @@ function pose = getPose(data)
 
 end 
 
+function orientation = getOrientation(data)
+
+        angle_x = data.Transform.Rotation.X;
+        angle_y = data.Transform.Rotation.Y;
+        angle_z = data.Transform.Rotation.Z;
+        angle_w = data.Transform.Rotation.W;
+
+        [yaw,pitch,roll] = quat2angle([angle_x angle_y angle_z angle_w]);
+        yaw_d = rad2deg(roll); %horizontal
+
+        pitch_d = rad2deg(pitch); %vertical
+        orientation = [yaw_d,pitch_d];
+        
+
+end 
+
 function u = speed_controller(c,d,k1)
     e = (c - d);
     %disp(-200*tanh(e))
     u = -k1*tanh(2*e);
+
+end
+function u = speed_controller_gimbal(c,d,k1)
+    disp(c-d)
+    e = (c - d)/(k1-20)
+    %disp(-200*tanh(e))
+    u = k1*tanh(e);
 
 end
 

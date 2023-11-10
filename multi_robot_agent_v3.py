@@ -1,8 +1,7 @@
 import time
 from robomaster import robot, conn, camera
 import rospy
-from geometry_msgs.msg import Quaternion
-from geometry.msgs.msg import Point
+from geometry_msgs.msg import Quaternion,Point
 from std_msgs.msg import String
 import threading
 import cv2
@@ -143,7 +142,7 @@ def gimbal_thread(connected_robots,robot_names):
                                 gimbal_publisher(f'{robot_names[i]}_gimbal',pitch_angle,yaw_angle)
 
                 except Exception as e: 
-                        print(e)
+                        print(e + " at gimbal")
                         
 def gimbal_publisher(topic,pitch,yaw): 
         pub = rospy.Publisher(topic, Point, queue_size=10)
@@ -193,6 +192,7 @@ def main():
                 print(f"intentando {SN[i]}")
                 robots.append(robot.Robot())
                 robots[i].initialize(conn_type="sta",sn=SN[i])
+                #robots[i].initializae(conn_type = "ap")
                 robot_speeds[robot_names[i]] = [0,0,0,0]
                 gimbal_control[robot_names[i]] = [0,0]
                 print(f"robot con sn {SN[i]} inicializado")
@@ -201,8 +201,8 @@ def main():
         cameraThread = threading.Thread(target = cameraProcessing, args=(robots,))
         cameraThread.start()
         
-        gimbalThread = threading.Thread(target = gimbal_thread, args=(robots,robot_names))
-        gimbalThread.start()
+        #gimbalThread = threading.Thread(target = gimbal_thread, args=(robots,robot_names))
+        #gimbalThread.start()
 
         while True:
                 robot_info(robot_names)
