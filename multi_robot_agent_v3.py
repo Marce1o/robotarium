@@ -6,9 +6,15 @@ from std_msgs.msg import String
 import threading
 import cv2
 import yaml 
-
 from io import StringIO
 import sys
+
+#--------------------------------------- BUSCAR ROBOTS EN LA RED
+
+""" La libreria sys y la stringio nos permiten extraer como string lo que se manda en la terminal, 
+mientras que la funcion scan_robot_ip_list nos permite extraer que robots estan conectados a la 
+red, devolviendo una IP y un numero serial, extraemos eso como string que añadimos a una lista 
+y procedemos a limpiar y dejando solo el SN  """
 
 tmp = sys.stdout
 resultado = StringIO()
@@ -21,6 +27,13 @@ del listaDeConectados[-1]
 
 for i in range(0,len(listaDeConectados)):
     listaDeConectados[i] = listaDeConectados[i][14:28]
+
+#--------------------------------------- CONFIGURAR POSIBLES CONEXIONES
+
+""" En esta seccion abrimos el archivo de configuracion de robots lo que nos permite extraer las SN 
+de los robots posiblemente conectados, los cuales son comparados con la lista generada previamente
+para obtener aquellos que estan en la red actualmente, los cuales se hacen append a una nueva lista
+llamada SN, tambien se guarda el nombre de cada robot como parte de una lista más  """
 
 
 with open('robot_config.yaml','r') as file:
@@ -46,24 +59,20 @@ for i in range(0,len(robomaster_config)):
 print(SN)
 print(robot_names)
 
-control = []
-robots = []
-robots_data= []
 
-blaster_data = []
-state = " "
+#--------------------------------------- Declaracion de Variables
 
-pitch_angle = 0
-yaw_angle  = 0
+robots = [] #Lista que guarda los robots inicializados
 
-robot_speeds = {}
-gimbal_speeds = {}
-gimbal_control = {}
+robot_speeds = {} #Diccionario donde se guardan las velocidades de  las llantas de cada robot iniciado
+gimbal_control = {}#Diccionario donde se guardan las señales de control de cada gimbal iniciado
+
+exec_state = 'run' #variable de estado de ejecución
+
+#--------------------------------------- FUNCIONES 
 
 
-
-#################################################
-
+#---------------- CAMARA
 def cameraProcessing(connected_robots): 
         cameras = []
         for i in range(0,len(connected_robots),1):
@@ -91,12 +100,12 @@ def cameraProcessing(connected_robots):
                         except Exception as e: 
                                 print(e)
 
-#################################################
+#---------------- FUNCIONES DE ROS
 
-
-################### ROS FUNCTIONS
 def robotPublisher(names):
-       #print('publisher')
+       """ Funcion que se encarga de publicar como string la lista de nombres de los robots 
+       encontrados en la red  """
+
        rospy.init_node('robot_controller',anonymous=True)
        pub = rospy.Publisher('robot_names', String, queue_size=10)
        n_robots = "".join(names)
@@ -113,69 +122,34 @@ def robotPublisher(names):
                         break
 
 def stateCollector(msg):
-        global state
-        state = msg.data 
-###################  GIMBAL FUNCTIONS
-def gimbal_thread(connected_robots,robot_names):
-        global pitch_angle,yaw_angle
-        global responseCounter
-        responseCounter = 0
-        meanResponseTime = 0.05
-        currentMobileSleep = 0.1
-        responseRate = 0
+
+        """ funcion que se encarga de asignar el valor del estado de ejecución que publica matlab """
+
+        global exec_state
+        exec_state = msg.data 
+
+def getState():
+        """ Funcion que se encarga de suscribirse al topico de estado de ejecución """
         while True:
-                try:
-                        for robot_num in range(0,len(connected_robots),1):
-                                value = connected_robots[robot_num].gimbal.sub_angle(freq=50, callback=get_attitude)
-                                
-                                time.sleep(currentMobileSleep)
-                                meanResponseTime = currentMobileSleep/responseCounter
-                                if(meanResponseTime>=0.025 and responseCounter<=4):
-                                    currentMobileSleep += 0.02
-                                if(meanResponseTime<=0.02 and responseCounter>=6):
-                                    currentMobileSleep -= 0.02
-                                responseCounter = 0
-                                #print(f"-------------,{meanResponseTime}, {currentMobileSleep}")
-                                connected_robots[i].gimbal.unsub_angle()
-                                                               
-
-                                gimbal_publisher(f'{robot_names[i]}_gimbal',pitch_angle,yaw_angle)
-
-                except Exception as e: 
-                        print(e + " at gimbal")
-                        
-def gimbal_publisher(topic,pitch,yaw): 
-        pub = rospy.Publisher(topic, Point, queue_size=10)
-        rate = rospy.Rate(10)
-        counter = 0
-        while not rospy.is_shutdown():
-                counter = counter + 1 
-                msg = Point()
-                msg.x = pitch
-                msg.y =  yaw
-                pub.publish(msg)
-                rate.sleep()
-
-                if counter == 2:
-                        break
-
-def get_attitude(angle_info):
-    global pitch_angle, yaw_angle, responseCounter
-    responseCounter = responseCounter + 1
-    pitch_angle,yaw_angle,pitch_ground_angle, yaw_ground_angle = angle_info
-
-    #print(f"this is {pitch_angle}, {yaw_angle}, {responseCounter}")
+                rospy.Subscriber('exec_state',String,stateCollector)
 
 def robot_assign(msg):
+
+        """ Funcion que asigna a cada robot su correspondiente velocidad dentro del diccionario """
+
         global name,robot_speeds
         robot_speeds[name] = [msg.x,msg.y,msg.z,msg.w]
 
 def gimbal_assign(msg):
+       """ Funcion que asigna a cada gimbal su correspondiente velocidad dentro del diccionario """
+
        global name,gimbal_control 
 
        gimbal_control[name] = [msg.x,msg.y]
 
 def robot_info(robots_names): 
+        """ Funcion que se suscribe a cada uno de los topicos del robot"""
+
         global name
         for robot in robots_names: 
                 name = robot
@@ -185,30 +159,36 @@ def robot_info(robots_names):
 
 #################################################
 def main():
-        global state, robot_speeds,gimbal_control,gimbal_speeds
+        global state, robot_speeds,gimbal_control
 
-        ################ Inicializacion de los robots 
+        #------------------ INICIALIZA CADA ROBOT
         for i in range(0,len(SN),1):
                 print(f"intentando {SN[i]}")
                 robots.append(robot.Robot())
                 robots[i].initialize(conn_type="sta",sn=SN[i])
-                #robots[i].initializae(conn_type = "ap")
                 robot_speeds[robot_names[i]] = [0,0,0,0]
                 gimbal_control[robot_names[i]] = [0,0]
                 print(f"robot con sn {SN[i]} inicializado")
                 print(i, robots)
 
+
+        #------------------ INICIALIZA THREAD PARA LEER CAMARAS Y ESTADO DE EJECUCION
         cameraThread = threading.Thread(target = cameraProcessing, args=(robots,))
         cameraThread.start()
         
-        #gimbalThread = threading.Thread(target = gimbal_thread, args=(robots,robot_names))
-        #gimbalThread.start()
+        executionThread = threading.Thread(target=getState)
+        executionThread.start
 
-        while True:
+        while exec_state == 'run':
+
+                """durante este proceso el programa se comuncia con cada uno de los robots y les da 
+                sus velocidades de chasis y gimbal especificas, siempre y cuando el valor de 
+                estado de ejecución sea igual a run, si este valor es diferente detiene los robots y 
+                cierra la comunicación con los dispositvos"""
+
                 robot_info(robot_names)
 
-                ################ Ciclo encargado de asignar los valores correspondientes de velocidad a cada robot
-                
+        
                 for i in range(0,len(robots)):
 
                         params = robot_speeds[robot_names[i]]
@@ -217,16 +197,15 @@ def main():
                         g_params = gimbal_control[robot_names[i]]
                         robots[i].gimbal.drive_speed(g_params[0],g_params[1])
                         
-                if state == 'shutdown':
-                        for i in range(0,len(robots),1):
-                                robots[i].chassis.drive_wheels(0,0,0,0)
-                                robots[i].gimbal.drive_speed(0,0)
-                        break
+        
+        if exec_state == 'shutdown':
+                for i in range(0,len(robots)):
 
-         ################ Cierra la conexion con cada uno de los robots 
-        for i in range(1,len(robots),1):
-                robots[i-1].close()
+                        robots[i].chassis.drive_wheels(0,0,0,0)
 
+                        robots[i].gimbal.drive_speed(0,0)
+
+                        robots[i].close()
                 
 if __name__ == '__main__':
         robotPublisher(robot_names)
