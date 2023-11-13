@@ -74,12 +74,13 @@ exec_state = 'run' #variable de estado de ejecución
 
 #---------------- CAMARA
 def cameraProcessing(connected_robots): 
+        global exec_state
         cameras = []
         for i in range(0,len(connected_robots),1):
                 cameras.append(connected_robots[i].camera)
                 cameras[i].start_video_stream(display=False, resolution=camera.STREAM_360P)
 
-        while True: 
+        while exec_state != 'shutdown': 
                 for i in range(0,len(connected_robots),1): 
                         try: 
                                 start = time.time()
@@ -99,6 +100,8 @@ def cameraProcessing(connected_robots):
                         
                         except Exception as e: 
                                 print(e)
+        
+        print('Killed Camera')
 
 #---------------- FUNCIONES DE ROS
 
@@ -124,14 +127,16 @@ def robotPublisher(names):
 def stateCollector(msg):
 
         """ funcion que se encarga de asignar el valor del estado de ejecución que publica matlab """
-
         global exec_state
         exec_state = msg.data 
 
 def getState():
         """ Funcion que se encarga de suscribirse al topico de estado de ejecución """
-        while True:
+        while exec_state != 'shutdown':
                 rospy.Subscriber('exec_state',String,stateCollector)
+
+        print('killed exec state')
+
 
 def robot_assign(msg):
 
@@ -155,11 +160,12 @@ def robot_info(robots_names):
                 name = robot
                 rospy.Subscriber(f"{robot}/wheels",Quaternion ,robot_assign)
                 rospy.Subscriber(f'{robot}/gimbal_speed',Point,gimbal_assign)
+                #rospy.Subscriber('exec_state',String,stateCollector)
 
 
 #################################################
 def main():
-        global state, robot_speeds,gimbal_control
+        global exec_state, robot_speeds,gimbal_control
 
         #------------------ INICIALIZA CADA ROBOT
         for i in range(0,len(SN),1):
@@ -177,7 +183,7 @@ def main():
         cameraThread.start()
         
         executionThread = threading.Thread(target=getState)
-        executionThread.start
+        executionThread.start()
 
         while exec_state == 'run':
 
@@ -188,7 +194,6 @@ def main():
 
                 robot_info(robot_names)
 
-        
                 for i in range(0,len(robots)):
 
                         params = robot_speeds[robot_names[i]]
@@ -206,6 +211,8 @@ def main():
                         robots[i].gimbal.drive_speed(0,0)
 
                         robots[i].close()
+
+                        print('Killed robots')
                 
 if __name__ == '__main__':
         robotPublisher(robot_names)

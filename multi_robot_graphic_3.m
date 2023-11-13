@@ -15,7 +15,7 @@ updatefreq = 30;
 dt = 1/updatefreq;
 
 %%%% ROS PUBLISHERS 
-state_publisher = rospublisher("/state","std_msgs/String","DataFormat","struct");
+state_publisher = rospublisher("/exec_state","std_msgs/String","DataFormat","struct");
 wheel_publishers = dictionary; 
 gimbal_publishers = dictionary;
 
@@ -52,7 +52,7 @@ matrix = 1/wheel_radius*[1 1 (robot_l+robot_w); 1 -1 -(robot_l+robot_w); 1 1 -(r
 %%%% GIMBAL VARIABLES
 xpd = zeros(robot_number);
 xyd = zeros(robot_number);
-xyd(1) = 5
+xyd(1) = 50
 
 %%%% CONTROLLER CONSTANTS 
 max_linear = 0.5;
@@ -120,10 +120,10 @@ while buttons(1,2) == 0
 
       
         [axes, buttons, ~] = read(joy);
-        uy = speed_controller_gimbal(xyd(i),abs(gimbal_orientation(1)),max_gimbal_speed)
-        %up = speed_controller_gimbal(xpd(i),gimbal_orientation(2),max_gimbal_speed)
+        uy = speed_controller_gimbal(xyd(i),abs(gimbal_orientation(1)),max_gimbal_speed);
+        up = speed_controller_gimbal(xpd(i),gimbal_orientation(2),max_gimbal_speed);
         
-        gimbal_temp = [0,-uy];
+        gimbal_temp = [up,-uy];
         
          
         send_twist(wheel_publishers(robot_names(i)),robot_temp)
@@ -190,7 +190,7 @@ function orientation = getOrientation(data)
         yaw_d = rad2deg(roll); %horizontal
 
         pitch_d = rad2deg(pitch); %vertical
-        orientation = [yaw_d,pitch_d];
+        orientation = [-yaw_d,pitch_d];
         
 
 end 
