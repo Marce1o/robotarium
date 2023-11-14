@@ -15,7 +15,7 @@ updatefreq = 30;
 dt = 1/updatefreq;
 
 %%%% ROS PUBLISHERS 
-state_publisher = rospublisher("/state","std_msgs/String","DataFormat","struct");
+state_publisher = rospublisher("/exec_state","std_msgs/String","DataFormat","struct");
 wheel_publishers = dictionary; 
 gimbal_publishers = dictionary;
 
@@ -49,17 +49,19 @@ robot_w = 0.10;
 %matrix = 1/wheel_radius*[1 -1 -(robot_l+robot_w); 1 1 (robot_l+robot_w); 1 -1 (robot_l+robot_w); 1 1 -(robot_l+robot_w)]
 matrix = 1/wheel_radius*[1 1 (robot_l+robot_w); 1 -1 -(robot_l+robot_w); 1 1 -(robot_l+robot_w); 1 -1 (robot_l+robot_w)];
 
-%%%% GIMBAL VARIABLES4906586
+%%%% GIMBAL VARIABLES
 xpd = zeros(robot_number);
 xyd = zeros(robot_number);
+xyd(1) = 50;
+ypd(1) = 30;
 
-xyd(1) = 0
-max_gimbal_speed = 90;
-
-
-%%%% SPEED CONSTANTS 
+%%%% CONTROLLER CONSTANTS 
 max_linear = 0.5;
 max_theta = 2.4906586;
+max_gimbal_speed = 90;
+
+pose_flag = "neutral";
+b_flag = pose_flag; 
 
 for i = 1:robot_number
     sub_topic = "/vicon/"+robot_names(i)+"/"+robot_names(i);
@@ -100,7 +102,7 @@ while buttons(1,2) == 0
 
 
         robot_pose = getPose(pose_data);
-        gimbal_orientation = getOrientation(gimbal_data);
+        [gimbal_orientation,pose_flag] = getOrientation(gimbal_data);
         
         xpos(k) = robot_pose(1);
         ypos(k) = robot_pose(2);
@@ -113,7 +115,7 @@ while buttons(1,2) == 0
         %speed_vec = [-uy;-ux;uw];
 
         speed_vec = [ux;uy;uw];
-
+        
         wheelSpeed = matrix*speed_vec;
 
         wheelSpeed = wheelSpeed*(30/pi);
@@ -122,12 +124,27 @@ while buttons(1,2) == 0
 
       
         [axes, buttons, ~] = read(joy);
+        uy = speed_controller_gimbal(xyd(i),gimbal_orientation(1),max_gimbal_speed);
         up = speed_controller_gimbal(xpd(i),gimbal_orientation(2),max_gimbal_speed);
-        uy = speed_controller_gimbal(xyd(i),abs(gimbal_orientation(1)),max_gimbal_speed)
+
+        yawpos(k) = gimbal_orientation(1);
+        pitchpos(k) = gimbal_orientation(2);
         
-        gimbal_temp = [up,uy];
+
+        % if b_flag ~= pose_flag
+        %     if gimbal_orientation(1) > 110 || gimbal_orientation(1) < -110
+        %         gimbal_temp = [up,uy];
+        %         b_flag = pose_flag; 
+        %     else 
+        %         gimbal_temp = [up,-uy];
+        %         b_flag = pose_flag;
+        %     end
+        % elseif b_flag == pose_flag 
+        %     gimbal_temp = [up,-uy];
+        % end
+
+        gimbal_temp = [up,-uy];
         
-         
         send_twist(wheel_publishers(robot_names(i)),robot_temp)
         send_point(gimbal_publishers(robot_names(i)),gimbal_temp)
 
@@ -155,6 +172,21 @@ figure
 plot(time,thetapos)
 title('theta-position')
 
+figure
+plot(time,yawpos)
+title('yaw-position')
+
+figure
+plot(time,pitchpos)
+title('pitch-position')
+
+figure
+hold on
+fill([6.5,-6.5,-6.5,-3.14,6.5],[2.5,2.5,0,-2.5,-2.5],[255/255, 153/255, 51/255])
+axis equal
+plot(ypos,xpos)
+title('x-y pos')
+
 
 function pose = getPose(data)
 
@@ -174,7 +206,7 @@ function pose = getPose(data)
 
 end 
 
-function orientation = getOrientation(data)
+function [orientation,flag] = getOrientation(data)
 
         angle_x = data.Transform.Rotation.X;
         angle_y = data.Transform.Rotation.Y;
@@ -184,12 +216,16 @@ function orientation = getOrientation(data)
         [yaw,pitch,roll] = quat2angle([angle_x angle_y angle_z angle_w]);
         yaw_d = rad2deg(roll); %horizontal
 
-        % if yaw_d < 0
-        %     yaw_d = yaw_d - 360;
-        % end
-
         pitch_d = rad2deg(pitch); %vertical
         orientation = [yaw_d,pitch_d];
+
+        if yaw_d < 0 
+            flag = 'positive';
+        
+        elseif yaw_d >= 0
+            flag = 'negative';
+        
+        end
         
 
 end 
