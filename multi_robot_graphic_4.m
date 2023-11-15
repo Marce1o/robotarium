@@ -29,7 +29,7 @@ gimbal_topics = dictionary;
 %robot_names = receive(active_robots,100);
 %robot_names = robot_names.Data
 
-robot_names = "rm_3";
+robot_names = "rm_3 rm_5";
 robot_names = split(robot_names);
 
 robot_number = length(robot_names);
@@ -37,10 +37,13 @@ robot_number = length(robot_names);
 
 dx = zeros(robot_number);
 dy = zeros(robot_number);
-dx(1) = 0;
+dx(1) = -1;
 dy(1) = 0;
+dx(2) = 1;
+dy(2) = 0;
+
 dtheta = zeros(robot_number);
-%dtheta(1) = 1.57;
+dtheta(1) = 0;
 
 wheel_radius = 0.05;
 robot_l = 0.10;
@@ -52,8 +55,8 @@ matrix = 1/wheel_radius*[1 1 (robot_l+robot_w); 1 -1 -(robot_l+robot_w); 1 1 -(r
 %%%% GIMBAL VARIABLES
 xpd = zeros(robot_number);
 xyd = zeros(robot_number);
-xyd(1) = 50;
-ypd(1) = 30;
+xyd(1) = 0;
+xpd(1) = 0;
 
 %%%% CONTROLLER CONSTANTS 
 max_linear = 0.5;
@@ -104,13 +107,13 @@ while buttons(1,2) == 0
         robot_pose = getPose(pose_data);
         [gimbal_orientation,pose_flag] = getOrientation(gimbal_data);
         
-        xpos(k) = robot_pose(1);
-        ypos(k) = robot_pose(2);
-        thetapos(k) = robot_pose(4);
+        xpos(k,i) = robot_pose(1);
+        ypos(k,i) = robot_pose(2);
+        thetapos(k,i) = robot_pose(4);
         
-        ux = speed_controller(robot_pose(1),dx(robot_number),max_linear);
-        uy = speed_controller(robot_pose(2),dy(robot_number),max_linear);
-        uw = speed_controller(robot_pose(4),dtheta(robot_number),max_theta);
+        ux = speed_controller(robot_pose(1),dx(i),max_linear);
+        uy = speed_controller(robot_pose(2),dy(i),max_linear);
+        uw = speed_controller(robot_pose(4),dtheta(i),max_theta);
 
         %speed_vec = [-uy;-ux;uw];
 
@@ -127,8 +130,8 @@ while buttons(1,2) == 0
         uy = speed_controller_gimbal(xyd(i),gimbal_orientation(1),max_gimbal_speed);
         up = speed_controller_gimbal(xpd(i),gimbal_orientation(2),max_gimbal_speed);
 
-        yawpos(k) = gimbal_orientation(1);
-        pitchpos(k) = gimbal_orientation(2);
+        yawpos(k,i) = gimbal_orientation(1);
+        pitchpos(k,i) = gimbal_orientation(2);
         
 
         % if b_flag ~= pose_flag
@@ -144,6 +147,7 @@ while buttons(1,2) == 0
         % end
 
         gimbal_temp = [up,-uy];
+        %gimbal_temp = [up,0];
         
         send_twist(wheel_publishers(robot_names(i)),robot_temp)
         send_point(gimbal_publishers(robot_names(i)),gimbal_temp)
@@ -182,9 +186,9 @@ title('pitch-position')
 
 figure
 hold on
-fill([6.5,-6.5,-6.5,-3.14,6.5],[2.5,2.5,0,-2.5,-2.5],[255/255, 153/255, 51/255])
+fill([6.5,-6.5,-6.5,-3.14,6.5],[2.5,2.5,0,-2.5,-2.5],[200/255, 200/255, 200/255])
 axis equal
-plot(ypos,xpos)
+plot(xpos,ypos)
 title('x-y pos')
 
 

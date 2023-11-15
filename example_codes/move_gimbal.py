@@ -5,7 +5,7 @@ from robomaster import robot
 
 if __name__ == '__main__':
     ep_robot = robot.Robot()
-    ep_robot.initialize(conn_type="ap")
+    ep_robot.initialize(conn_type="sta")
 
     ep_gimbal = ep_robot.gimbal
 
@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # slp =3
     # # 控制云台向右以30度每秒旋转3秒
-    ep_gimbal.drive_speed(pitch_speed=0, yaw_speed=0)
+    ep_gimbal.drive_speed(pitch_speed=0, yaw_speed=00)
     time.sleep(3)
 
     # # 控制云台向左以30度每秒旋转3秒
