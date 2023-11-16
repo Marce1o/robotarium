@@ -167,22 +167,27 @@ rosshutdown
 figure
 plot(time,xpos)
 title('x-position')
+legend(robot_names)
 
 figure
 plot(time,ypos)
 title('y-position')
+legend(robot_names)
 
 figure
 plot(time,thetapos)
 title('theta-position')
+legend(robot_names)
 
 figure
 plot(time,yawpos)
 title('yaw-position')
+legend(robot_names)
 
 figure
 plot(time,pitchpos)
 title('pitch-position')
+legend(robot_names)
 
 figure
 hold on
@@ -190,6 +195,7 @@ fill([6.5,-6.5,-6.5,-3.14,6.5],[2.5,2.5,0,-2.5,-2.5],[200/255, 200/255, 200/255]
 axis equal
 plot(xpos,ypos)
 title('x-y pos')
+legend(robot_names)
 
 
 function pose = getPose(data)
