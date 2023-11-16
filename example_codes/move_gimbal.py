@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # slp =3
     # # 控制云台向右以30度每秒旋转3秒
-    ep_gimbal.drive_speed(pitch_speed=0, yaw_speed=00)
+    ep_gimbal.drive_speed(pitch_speed=0, yaw_speed=0)
     time.sleep(3)
 
     # # 控制云台向左以30度每秒旋转3秒

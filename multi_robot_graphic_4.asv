@@ -146,7 +146,7 @@ while buttons(1,2) == 0
         %     gimbal_temp = [up,-uy];
         % end
         
-        if abs(angle_offset) < 120
+        if abs(angle_offset) > 120
             gimbal_temp = [up,uy];
         else
             gimbal_temp = [up,-uy];
