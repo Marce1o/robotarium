@@ -1,17 +1,36 @@
-%dbstop if error
+
 clear; clc
 
 % rosshutdown 
-% close_system('vicon_hexatilted_read')
 % rosinit 
+% setenv('ROS_MASTER_URI', 'http://192.168.0.145:11311')
 
-sigmanoise = 0.000000;
+% sigmanoise = 0.000000;
+% Obs = InitObserver();
 
-Obs = InitObserver();
+% tf = Inf;
+% mdl = "send_pwm.slx";
+% open_system(mdl)
 
-tf = 5;
-open_system('vicon_hexatilted_read')
-sim("vicon_hexatilted_read.slx")
+% mdl = 'vicon_hexatilted_read';
+% open_system(mdl)
+
+%% Before connecting ESP
+
+% rosnode list
+% /matlab_global_node_27250
+% /rosout
+% /send_pwm_90580
+% /vicon
+
+% rostopic list
+% /PWM                  
+% /diagnostics          
+% /rosout               
+% /rosout_agg           
+% /tf                   
+% /vicon/QuadGus/QuadGus
+% /vicon/markers    
 
 function Observer = InitObserver()
     alpha = [0.5; 0.5; 0.5; 0.5; 0.5; 0.5; 0.5; 0.5];
