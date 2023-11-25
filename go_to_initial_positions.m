@@ -27,6 +27,7 @@ function go_to_initial_positions(N,initial_conditions,config)
                 state(:,i) = get_Pose(config,i);
     
                 error(:,i) = state(:,i) - stated(:,i);
+                error(4,1)
                     
                 if norm(error(:,i)) >= 0.01
                     BRW = [ cos(state(3,i)),sin(state(3,i)),0;...
@@ -36,8 +37,8 @@ function go_to_initial_positions(N,initial_conditions,config)
                                                            -k_linear*tanh(2*(error(2,i)));...
                                                            -k_theta*tanh(2*(error(3,i)))];
         
-                    gimbal_speed = [k_gimbal*tanh(2*(error(4,i)));...
-                                    k_gimbal*tanh(2*(error(5,i)))];
+                    gimbal_speed = [-k_gimbal*tanh(2*(error(4,i)));...
+                                    -k_gimbal*tanh(2*(error(5,i)))];
         
                     send_twist(config.w_pub(config.robot_names(i)),wheel_speed)
                     send_point(config.g_pub(config.robot_names(i)),gimbal_speed)      
@@ -52,21 +53,23 @@ function go_to_initial_positions(N,initial_conditions,config)
   
 end
 
-function [x,y,th,yaw,pitch] = get_Pose(config,iteration)
+function speed = get_Pose(config,iteration)
         pose_data = receive(config.r_sub(config.robot_names(iteration)),10);
         gimbal_data = receive(config.g_sub(config.robot_names(iteration)),10);
 
         robot_pose = getInfoPose(pose_data);
 
-        x = pose_data(1);
-        y = pose_data(2);
-        th = pose_data(3);
+        x = robot_pose(1);
+        y = robot_pose(2);
+        th = robot_pose(3);
 
         gimbal_orientation = getOrientation(gimbal_data);
-        gimbal_orientation(1) = gimbal_orientation(1) - rad2deg(robot_pose(3));
+        gimbal_orientation(1) = gimbal_orientation(1) - robot_pose(3);
 
         yaw = gimbal_orientation(1);
         pitch = gimbal_orientation(2);
+
+        speed = [x;y;th;yaw;pitch];
 
 end
 
@@ -95,8 +98,10 @@ function orientation = getOrientation(data)
         [yaw,pitch,roll] = quat2angle([angle_x angle_y angle_z angle_w]);
         %yaw_d = rad2deg(roll); %horizontal
         %pitch_d = rad2deg(pitch); %vertical
-        orientation = [yaw,pitch]; % radians!!
+        orientation = [roll,pitch]; % radians!!
 end
+
+
 
 function send_twist(topic,data)
     msg = rosmessage(topic);

@@ -23,10 +23,10 @@ angle_z = data.Transform.Rotation.Z;
 angle_w = data.Transform.Rotation.W;
 
 
-robot_x = robot_data.Transform.Rotation.X;
-robot_y = robot_data.Transform.Rotation.Y;
-robot_z = robot_data.Transform.Rotation.Z;
-robot_w = robot_data.Transform.Rotation.W;
+robot_x = data.Transform.Rotation.X;
+robot_y = data.Transform.Rotation.Y;
+robot_z = data.Transform.Rotation.Z;
+robot_w = data.Transform.Rotation.W;
 
 [yaw,pitch,roll] = quat2angle([angle_x angle_y angle_z angle_w]);
 
@@ -34,6 +34,7 @@ robot_w = robot_data.Transform.Rotation.W;
 
 roll_d = rad2deg(roll)
 roll_d_r = rad2deg(rollr)
+
 comp = roll_d - roll_d_r
 
 end

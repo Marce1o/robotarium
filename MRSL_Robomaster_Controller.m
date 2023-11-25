@@ -6,7 +6,7 @@ clear all
 
 [config,Nmax] = init();
 
-N.RobomasterF = 2; 
+N.RobomasterF = 1; 
 
 initial_conditions.RobomasterF(:,1) = [0,0,0,0,0];
 
@@ -61,8 +61,8 @@ while buttons(1,2) == 0
         w.RobomasterF(:,i) =  w.RobomasterF(:,i)*(30/pi);
 
 
-        g.RobomasterF(:,i) = [k_gimbal*tanh((yaw-yawd)/k_gimbal);...
-                              k_gimbal*tanh((pitch-pitchd)/k_gimbal)];
+        g.RobomasterF(:,i) = [k_gimbal*tanh((yaw-yawd));...
+                              k_gimbal*tanh((pitch-pitchd))];
       
 
         [axes, buttons, ~] = read(config.joy);

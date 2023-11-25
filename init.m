@@ -21,7 +21,7 @@ function [config,Nmax] = init()
     Nmax.RobomasterF = length(config.robot_names);
 
     
-   for i = 1:N.RobomasterFMax
+   for i = 1:Nmax.RobomasterF
     config.r_sub(config.robot_names(i)) = rossubscriber("/vicon/"+config.robot_names(i)+"/"+config.robot_names(i),"geometry_msgs/TransformStamped");  
     pause(1)
 
