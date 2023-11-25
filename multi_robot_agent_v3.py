@@ -208,6 +208,10 @@ def main():
 
                         robots[i].chassis.drive_wheels(0,0,0,0)
 
+                        print('Killed chassis')
+                
+                for i in range(0,len(robots)):
+                        robots[i].gimbal.recenter(60,60).wait_for_completed()
                         robots[i].gimbal.drive_speed(0,0)
 
                         robots[i].close()

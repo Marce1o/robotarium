@@ -29,7 +29,7 @@ gimbal_topics = dictionary;
 %robot_names = receive(active_robots,100);
 %robot_names = robot_names.Data
 
-robot_names = "rm_3";
+robot_names = "rm_3 ";
 robot_names = split(robot_names);
 
 robot_number = length(robot_names);
@@ -39,8 +39,8 @@ dx = zeros(robot_number);
 dy = zeros(robot_number);
 dx(1) = 0;
 dy(1) = 0;
-%dx(2) = 1;
-%dy(2) = -1;
+dx(2) = 1;
+dy(2) = -1;
 
 dtheta = zeros(robot_number);
 %dtheta(1) = 0;
@@ -146,7 +146,7 @@ while buttons(1,2) == 0
         %     gimbal_temp = [up,-uy];
         % end
         
-        if abs(angle_offset) > 120
+        if abs(angle_offset) < 120
             gimbal_temp = [up,uy];
         else
             gimbal_temp = [up,-uy];

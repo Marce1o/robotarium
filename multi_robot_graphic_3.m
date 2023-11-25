@@ -29,7 +29,7 @@ gimbal_topics = dictionary;
 %robot_names = receive(active_robots,100);
 %robot_names = robot_names.Data
 
-robot_names = "rm_3";
+robot_names = "rm_3 rm_5";
 robot_names = split(robot_names);
 
 robot_number = length(robot_names);
@@ -37,8 +37,10 @@ robot_number = length(robot_names);
 
 dx = zeros(robot_number);
 dy = zeros(robot_number);
-dx(1) = 0;
+dx(1) = 1;
 dy(1) = 0;
+dx(2) = -1
+dy(2) = 0
 dtheta = zeros(robot_number);
 %dtheta(1) = 1.57;
 
@@ -52,7 +54,6 @@ matrix = 1/wheel_radius*[1 1 (robot_l+robot_w); 1 -1 -(robot_l+robot_w); 1 1 -(r
 %%%% GIMBAL VARIABLES
 xpd = zeros(robot_number);
 xyd = zeros(robot_number);
-xyd(1) = 50
 
 %%%% CONTROLLER CONSTANTS 
 max_linear = 0.5;
@@ -104,9 +105,9 @@ while buttons(1,2) == 0
         ypos(k) = robot_pose(2);
         thetapos(k) = robot_pose(4);
         
-        ux = speed_controller(robot_pose(1),dx(robot_number),max_linear);
-        uy = speed_controller(robot_pose(2),dy(robot_number),max_linear);
-        uw = speed_controller(robot_pose(4),dtheta(robot_number),max_theta);
+        ux = speed_controller(robot_pose(1),dx(i),max_linear);
+        uy = speed_controller(robot_pose(2),dy(i),max_linear);
+        uw = speed_controller(robot_pose(4),dtheta(i),max_theta);
 
         %speed_vec = [-uy;-ux;uw];
 

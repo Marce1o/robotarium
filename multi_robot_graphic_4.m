@@ -38,12 +38,12 @@ robot_number = length(robot_names);
 dx = zeros(robot_number);
 dy = zeros(robot_number);
 dx(1) = 0;
-dy(1) = 0;
-%dx(2) = 1;
-%dy(2) = -1;
+dy(1) = 1;
+
 
 dtheta = zeros(robot_number);
-%dtheta(1) = 0;
+dtheta(1) = 0;
+dtheta(2) = 0;
 
 wheel_radius = 0.05;
 robot_l = 0.10;
@@ -55,8 +55,7 @@ matrix = 1/wheel_radius*[1 1 (robot_l+robot_w); 1 -1 -(robot_l+robot_w); 1 1 -(r
 %%%% GIMBAL VARIABLES
 xpd = zeros(robot_number);
 xyd = zeros(robot_number);
-xyd(1) = 30;
-xpd(1) = 0;
+
 
 %%%% CONTROLLER CONSTANTS 
 max_linear = 0.5;
@@ -125,7 +124,7 @@ while buttons(1,2) == 0
 
         robot_temp = transpose(wheelSpeed);
 
-        angle_offset = gimbal_orientation(1) -  rad2deg(robot_pose(4))
+        angle_offset = gimbal_orientation(1) -  rad2deg(robot_pose(4));
         [axes, buttons, ~] = read(joy);
         uy = speed_controller_gimbal(xyd(i),angle_offset,max_gimbal_speed);
         up = speed_controller_gimbal(xpd(i),gimbal_orientation(2),max_gimbal_speed);
@@ -133,26 +132,7 @@ while buttons(1,2) == 0
         yawpos(k,i) = gimbal_orientation(1);
         pitchpos(k,i) = gimbal_orientation(2);
         
-
-        % if b_flag ~= pose_flag
-        %     if gimbal_orientation(1) > 110 || gimbal_orientation(1) < -110
-        %         gimbal_temp = [up,uy];
-        %         b_flag = pose_flag; 
-        %     else 
-        %         gimbal_temp = [up,-uy];
-        %         b_flag = pose_flag;
-        %     end
-        % elseif b_flag == pose_flag 
-        %     gimbal_temp = [up,-uy];
-        % end
-        
-        if abs(angle_offset) < 120
-            gimbal_temp = [up,uy];
-        else
-            gimbal_temp = [up,-uy];
-        end
-        %gimbal_temp = [up,0];
-        
+        gimbal_temp = [up,-uy];  
         send_twist(wheel_publishers(robot_names(i)),robot_temp)
         send_point(gimbal_publishers(robot_names(i)),gimbal_temp)
 
