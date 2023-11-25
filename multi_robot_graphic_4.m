@@ -4,7 +4,6 @@ close all
 clear all 
 
 rosshutdown 
-
 rosinit 
 
 ID = 1;
@@ -28,44 +27,40 @@ gimbal_topics = dictionary;
 %%%% ROBOT VARIABLES 
 %robot_names = receive(active_robots,100);
 %robot_names = robot_names.Data
-
 robot_names = "rm_3";
 robot_names = split(robot_names);
+n_robots = length(robot_names);
 
-robot_number = length(robot_names);
 
-
-dx = zeros(robot_number);
-dy = zeros(robot_number);
+dx = zeros(n_robots);
+dy = zeros(n_robots);
 dx(1) = 0;
 dy(1) = 1;
 
 
-dtheta = zeros(robot_number);
+dtheta = zeros(n_robots);
 dtheta(1) = 0;
 dtheta(2) = 0;
 
-wheel_radius = 0.05;
-robot_l = 0.10;
-robot_w = 0.10;
-
-%matrix = 1/wheel_radius*[1 -1 -(robot_l+robot_w); 1 1 (robot_l+robot_w); 1 -1 (robot_l+robot_w); 1 1 -(robot_l+robot_w)]
-matrix = 1/wheel_radius*[1 1 (robot_l+robot_w); 1 -1 -(robot_l+robot_w); 1 1 -(robot_l+robot_w); 1 -1 (robot_l+robot_w)];
+w_rad = 0.05;
+L = 0.1;
+W = 0.1;
+M = [1, 1, (L+W);...
+     1,-1,-(L+W);...
+     1, 1,-(L+W);...
+     1,-1, (L+W)];
 
 %%%% GIMBAL VARIABLES
-xpd = zeros(robot_number);
-xyd = zeros(robot_number);
-
+xpd = zeros(n_robots);
+xyd = zeros(n_robots);
 
 %%%% CONTROLLER CONSTANTS 
 max_linear = 0.5;
 max_theta = 2.4906586;
 max_gimbal_speed = 90;
 
-pose_flag = "neutral";
-b_flag = pose_flag; 
 
-for i = 1:robot_number
+for i = 1:n_robots
     sub_topic = "/vicon/"+robot_names(i)+"/"+robot_names(i);
     subscriber = rossubscriber(sub_topic,"geometry_msgs/TransformStamped");
     robot_topics(robot_names(i)) = subscriber;   
@@ -96,7 +91,7 @@ while buttons(1,2) == 0
     robot_speeds = '';
 
 
-    for i = 1:robot_number
+    for i = 1:n_robots
 
         %%%%% ROBOT CONTROL
         pose_data = receive(robot_topics(robot_names(i)),10);
