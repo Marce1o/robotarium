@@ -45,9 +45,8 @@ while buttons(1,2) == 0
         x = poses.RobomasterF(1,i);
         y = poses.RobomasterF(2,i);
         th = poses.RobomasterF(3,i);
-
-        yaw = poses.GimbalF(1,i);
-        pitch = poses.GimbalF(2,i);
+        yaw = poses.RobomasterF(4,i);
+        pitch = poses.RobomasterF(5,i);
         
 
         BRW = [ cos(th),sin(th),0;...
@@ -63,14 +62,16 @@ while buttons(1,2) == 0
 
         g.RobomasterF(:,i) = [k_gimbal*tanh((yaw-yawd));...
                               k_gimbal*tanh((pitch-pitchd))];
-      
+        
 
         [axes, buttons, ~] = read(config.joy);
         send_twist(r.r_pub(r.r_names(i)),robot_temp)
         send_point(r.g_pub(r.r_names(i)),gimbal_temp)
 
     end
+    
 
+    r = step(r,w,N,config); 
     mywRobomasterF(:,:,it_now) = w.RobomasterF; 
     myposesRobomasterF(:,:,it_now) = poses.RobomasterF;
     it_now(k) = (k-1)*r.Dt;
@@ -81,35 +82,74 @@ end
 stop(N,config)
 
 
-figure
-plot(it_now,xpos)
-title('x-position')
-legend(robot_names)
-
-figure
-plot(it_now,ypos)
-title('y-position')
-legend(robot_names)
-
-figure
-plot(it_now,thetapos)
-title('theta-position')
-legend(robot_names)
-
-figure
-plot(it_now,yawpos)
-title('yaw-position')
-legend(robot_names)
-
-figure
-plot(it_now,pitchpos)
-title('pitch-position')
-legend(robot_names)
+for i 1:N.RobomasterF
 
 figure
 hold on
-fill([6.5,-6.5,-6.5,-3.14,6.5],[2.5,2.5,0,-2.5,-2.5],[200/255, 200/255, 200/255])
-axis equal
-plot(xpos,ypos)
-title('x-y pos')
-legend(robot_names)
+xRobomasterF1(:,1) = myposesRobomasterF(1,1,:);
+plot(mytime,xRobomasterF1)    
+plot(mytime,x1d*ones(it_max,1))
+title('t vs x1')
+
+figure
+hold on
+yRobomasterF1(:,1) = myposesRobomasterF(2,1,:);
+plot(mytime,yRobomasterF1)    
+plot(mytime,y1d*ones(it_max,1))
+title('t vs y1')
+
+figure
+hold on
+thRobomasterF1(:,1) = myposesRobomasterF(3,1,:);
+plot(mytime,thRobomasterF1)    
+plot(mytime,th1d*ones(it_max,1))
+title('t vs \theta_1')
+
+figure
+hold on
+w1RobomasterF1(:,1) = mywRobomasterF(1,1,:);
+w2RobomasterF1(:,2) = mywRobomasterF(2,1,:);
+w3RobomasterF1(:,3) = mywRobomasterF(3,1,:);
+w4RobomasterF1(:,4) = mywRobomasterF(4,1,:);
+plot(mytime,w1RobomasterF1) 
+plot(mytime,w2RobomasterF1)
+plot(mytime,w3RobomasterF1)
+plot(mytime,w4RobomasterF1) 
+title('t vs \omega_{1,i}')
+
+figure
+hold on
+xRobomasterF2(:,1) = myposesRobomasterF(1,2,:);
+plot(mytime,xRobomasterF2)    
+plot(mytime,x2d*ones(it_max,1))
+title('t vs x2')
+
+figure
+hold on
+yRobomasterF2(:,1) = myposesRobomasterF(2,2,:);
+plot(mytime,yRobomasterF2)    
+plot(mytime,y2d*ones(it_max,1))
+title('t vs y2')
+
+figure
+hold on
+thRobomasterF2(:,1) = myposesRobomasterF(3,2,:);
+plot(mytime,thRobomasterF2)    
+plot(mytime,th2d*ones(it_max,1))
+title('t vs \theta_2')
+
+figure
+hold on
+w1RobomasterF2(:,1) = mywRobomasterF(1,2,:);
+w2RobomasterF2(:,2) = mywRobomasterF(2,2,:);
+w3RobomasterF2(:,3) = mywRobomasterF(3,2,:);
+w4RobomasterF2(:,4) = mywRobomasterF(4,2,:);
+plot(mytime,w1RobomasterF2) 
+plot(mytime,w2RobomasterF2)
+plot(mytime,w3RobomasterF2)
+plot(mytime,w4RobomasterF2) 
+title('t vs \omega_{2,i}')
+
+
+end
+
