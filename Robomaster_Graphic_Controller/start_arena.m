@@ -81,9 +81,9 @@ function go_to_initial_positions(N,initial_conditions,config)
                  1, 1,-(L+W);...
                  1,-1, (L+W)];
 
-            k_linear = 0.5;
+            k_linear = 1;
             k_theta = 2.4906586;
-            k_gimbal = 90; %90 deg/s max speed
+            k_gimbal = 30; %90 deg/s max speed
         
         state       = zeros(5,N.RobomasterF); 
         stated      = zeros(5,N.RobomasterF);
@@ -99,31 +99,38 @@ function go_to_initial_positions(N,initial_conditions,config)
                               initial_conditions.RobomasterF(5,i)];
     
                 state(:,i) = get_Pose(config,i);
+                state(4,1)
+                stated(4,1)
     
                 error(:,i) = state(:,i) - stated(:,i);
                 error(4,1)
                     
-                if norm(error(:,i)) >= 0.01
+                if norm(error(:,i)) >= 0.05
                     BRW = [ cos(state(3,i)),sin(state(3,i)),0;...
                        -sin(state(3,i)),cos(state(3,i)),0;...
                              0    ,   0    ,1];
-                    wheel_speed = (30/pi)*(1/w_rad)*M*BRW*[-k_linear*tanh(2*(error(1,i)));...
-                                                           -k_linear*tanh(2*(error(2,i)));...
-                                                           -k_theta*tanh(2*(error(3,i)))];
+                    wheel_speed = (30/pi)*(1/w_rad)*M*BRW*[-k_linear*tanh((error(1,i)));...
+                                                           -k_linear*tanh((error(2,i)));...
+                                                           -k_theta*tanh((error(3,i)))];
         
-                    gimbal_speed = [-k_gimbal*tanh(2*(error(4,i)));...
-                                    -k_gimbal*tanh(2*(error(5,i)))];
+                    %gimbal_speed = [-k_gimbal*(error(4,i));...
+                    %                -k_gimbal*(error(5,i))];
+
+                    gimbal_speed = [-k_gimbal*(error(5,i));...
+                                    k_gimbal*(error(4,i))];
         
                     send_twist(config.w_pub(config.robot_names(i)),wheel_speed)
                     send_point(config.g_pub(config.robot_names(i)),gimbal_speed)      
                     error_large(i) = 1;
+                    error(:,i)
                 else
                     send_twist(config.w_pub(config.robot_names(i)),[0,0,0,0])
-                    send_point(config.g_pub(config.robot_names(i)),[0,0,0,0])
+                    send_point(config.g_pub(config.robot_names(i)),[0,0])
                     error_large(i) = 0;
                 end
             end
         end
+        disp("In position")
   
 end
 
@@ -138,9 +145,10 @@ function pose_vector = get_Pose(config,iteration)
         th = robot_pose(3);
 
         gimbal_orientation = getOrientation(gimbal_data);
-        gimbal_orientation(1) = gimbal_orientation(1) - robot_pose(3);
+        %Ensure that the orientations are in the right range
+        gimbal_orientation(1) = atan2(sin(gimbal_orientation(1) - robot_pose(3)), cos(gimbal_orientation(1) - robot_pose(3)));
 
-        yaw = gimbal_orientation(1);
+        yaw = gimbal_orientation(1)
         pitch = gimbal_orientation(2);
 
         pose_vector = [x;y;th;yaw;pitch];

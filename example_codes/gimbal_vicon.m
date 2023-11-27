@@ -34,6 +34,6 @@ robot_w = robot_data.Transform.Rotation.W;
 
 roll_d = rad2deg(roll)
 roll_d_r = rad2deg(rollr)
-comp = roll_d - roll_d_r
+comp = atan2(sin(roll - rollr), cos((roll - rollr)))
 
 end

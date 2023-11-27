@@ -1,7 +1,6 @@
-function r = step(r,w,N,config)
+function r = step(r,w,g,N,config)
     if N.RobomasterF>0
-        r = step_RobomasterF(r,w,N,config);
-        display_RobomasterF(r,N);
+        r = step_RobomasterF(r,w,g,N,config);
     end
 
     %Reset checks for get_pose
@@ -9,7 +8,7 @@ function r = step(r,w,N,config)
     r.called_step_already = true;
 end
 
-function r = step_RobomasterF(r,w,N,config)
+function r = step_RobomasterF(r,w,g,N,config)
 
     for i=1:1:N.RobomasterF
         send_twist(config.w_pub(config.robot_names(i)),w.RobomasterF(:,i))

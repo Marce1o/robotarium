@@ -1,6 +1,6 @@
-function [r,poses] = get_poses(r)
+function [r,poses] = get_poses(r,N,config)
         
-        for i = 1:n_robots
+        for i = 1:N.RobomasterF
             pose_vector = get_Pose(config,i);
             pose_vector(4) = pose_vector(4) - pose_vector(3);
             poses.RobomasterF(:,i) = pose_vector;
@@ -40,7 +40,8 @@ function pose_vector = get_Pose(config,iteration)
         th = robot_pose(3);
 
         gimbal_orientation = getOrientation(gimbal_data);
-        gimbal_orientation(1) = gimbal_orientation(1) - robot_pose(3);
+        %Ensure that the orientations are in the right range
+        gimbal_orientation(1) = atan2(sin(gimbal_orientation(1) - robot_pose(3)), cos(gimbal_orientation(1) - robot_pose(3)));
 
         yaw = gimbal_orientation(1);
         pitch = gimbal_orientation(2);

@@ -201,6 +201,9 @@ def main():
 
                         g_params = gimbal_control[robot_names[i]]
                         robots[i].gimbal.drive_speed(g_params[0],g_params[1])
+
+                robotPublisher(robot_names)
+                print("done publishing")
                         
         
         if exec_state == 'shutdown':
@@ -219,6 +222,4 @@ def main():
                         print('Killed robots')
                 
 if __name__ == '__main__':
-        robotPublisher(robot_names)
-        print("done publishing")
         main()
