@@ -5,7 +5,7 @@ function stop(N,config)
         send_point(config.g_pub(config.robot_names(i)),[0,0])
     end 
 
-    send_ros(state_publisher,'shutdown')
+    send_ros(config.state_pub,'shutdown')
     rosshutdown
 end
 

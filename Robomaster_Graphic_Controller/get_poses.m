@@ -7,7 +7,7 @@ function [r,poses] = get_poses(r,N,config)
             r.poses.RobomasterF = poses.RobomasterF(:,i);
         end
 
-        display_RobomasterF(r,N)
+        %display_RobomasterF(r,N)
        
 end
 

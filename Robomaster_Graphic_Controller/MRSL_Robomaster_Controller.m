@@ -8,12 +8,13 @@ clear all
 
 N.RobomasterF = 1; 
 
-initial_conditions.RobomasterF(:,1) = [0,0,0,1.57,0];
+initial_conditions.RobomasterF(:,1) = [0,0,0,pi/2,0];
 
 r = start_arena(N,initial_conditions,config); 
 
 w.RobomasterF = zeros(4,N.RobomasterF);
 g.RobomasterF = zeros(2,N.RobomasterF);
+
 
 w_rad = 0.05;
 L = 0.1;
@@ -24,24 +25,25 @@ M = [1, 1, (L+W);...
      1,-1, (L+W)];
 
 %%%% CONTROLLER CONSTANTS 
-k_linear = 0.5;
-k_theta = 2.4906586;
-k_gimbal = 90;
+k_linear = 1;
+k_theta = 1;
+k_gimbal = 75;
 
 
 [axes, buttons, ~] = read(config.joy);
 
 
-k = 1;
+it_now = 1;
 x1d = 1;
 y1d = 1;
 th1d = 0;
-yaw1d = 1.57;
+yaw1d = pi/2;
 pitch1d = pi/4;
 
 while buttons(1,2) == 0
-   it_now(k) = (k)*r.Dt;
+   tstart(it_now) = tic;
 
+   mytime(it_now) = (it_now-1)*r.Dt;
    [r,poses] = get_poses(r,N,config);
 
     for i = 1:N.RobomasterF
@@ -71,53 +73,62 @@ while buttons(1,2) == 0
     
 
     r = step(r,w,g,N,config); 
-    mywRobomasterF(:,:,k) = w.RobomasterF; 
-    mygRobomasterF(:,:,k) = g.RobomasterF;
-    myposesRobomasterF(:,:,k) = poses.RobomasterF;
+    mywRobomasterF(:,:,it_now) = w.RobomasterF; 
+    mygRobomasterF(:,:,it_now) = g.RobomasterF;
+    myposesRobomasterF(:,:,it_now) = poses.RobomasterF;
 
-    k = k + 1;
-    
+    tend(it_now) = toc(tstart(it_now));
+
+    it_now = it_now + 1;
 end  
 
 stop(N,config)
 
+desired_val = [x1d;y1d;th1d;yaw1d;pitch1d];
 
+save("data.mat","initial_conditions","desired_val","myposesRobomasterF","mywRobomasterF","mygRobomasterF","mytime","tend","it_now")
+
+it_now = it_now -1; 
 for i = 1:N.RobomasterF
+
+figure
+hold on 
+plot(mytime,tend)
 
 figure
 hold on
 xRobomasterF1(:,1) = myposesRobomasterF(1,1,:);
-plot(it_now,xRobomasterF1)    
-plot(it_now,x1d*ones(it_now,1))
+plot(mytime,xRobomasterF1)    
+plot(mytime,x1d*ones(it_now,1))
 title('t vs x1')
 
 figure
 hold on
 yRobomasterF1(:,1) = myposesRobomasterF(2,1,:);
-plot(it_now,yRobomasterF1)    
-plot(it_now,y1d*ones(it_now,1))
+plot(mytime,yRobomasterF1)    
+plot(mytime,y1d*ones(it_now,1))
 title('t vs y1')
 
 figure
 hold on
 thRobomasterF1(:,1) = myposesRobomasterF(3,1,:);
-plot(it_now,thRobomasterF1)    
-plot(it_now,th1d*ones(it_now,1))
+plot(mytime,thRobomasterF1)    
+plot(mytime,th1d*ones(it_now,1))
 title('t vs \theta_1')
 
 figure
 hold on
-yawRobomasterF1(:,1) = mygRobomasterF(1,1,:);
-plot(it_now,yawRobomasterF1)    
-plot(it_now,yaw1d*ones(it_now,1))
-title('t vs \yaw_1')
+yawRobomasterF1(:,1) = myposesRobomasterF(4,1,:);
+plot(mytime,yawRobomasterF1)    
+plot(mytime,yaw1d*ones(it_now,1))
+title('t vs yaw_1')
 
 figure
 hold on
-pitchRobomasterF1(:,1) = mygRobomasterF(2,1,:);
-plot(it_now,pitchRobomasterF1)    
-plot(it_now,th1d*ones(it_now,1))
-title('t vs \pitch_1')
+pitchRobomasterF1(:,1) = myposesRobomasterF(5,1,:);
+plot(mytime,pitchRobomasterF1)    
+plot(mytime,pitch1d*ones(it_now,1))
+title('t vs pitch_1')
 
 figure
 hold on
@@ -125,10 +136,10 @@ w1RobomasterF1(:,1) = mywRobomasterF(1,1,:);
 w2RobomasterF1(:,2) = mywRobomasterF(2,1,:);
 w3RobomasterF1(:,3) = mywRobomasterF(3,1,:);
 w4RobomasterF1(:,4) = mywRobomasterF(4,1,:);
-plot(it_now,w1RobomasterF1) 
-plot(it_now,w2RobomasterF1)
-plot(it_now,w3RobomasterF1)
-plot(it_now,w4RobomasterF1) 
+plot(mytime,w1RobomasterF1) 
+plot(mytime,w2RobomasterF1)
+plot(mytime,w3RobomasterF1)
+plot(mytime,w4RobomasterF1) 
 title('t vs \omega_{1,i}')
 
 end
