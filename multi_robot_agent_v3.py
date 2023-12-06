@@ -45,7 +45,6 @@ with open('robot_config.yaml','r') as file:
 ################ Declaracion SN de los robots
 #tempSN = ["3JKCK6U0030A54","3JKCK1600303QV","3JKCK6U0030AC4","3JKCK1600303EM","3JKCK1600302LH","3JKCK1600303P6"]
 SN = []
-
 robot_names = []
 
 ################ Añadir SN que se encuentran conectadas 
@@ -83,17 +82,11 @@ def cameraProcessing(connected_robots):
         while exec_state != 'shutdown': 
                 for i in range(0,len(connected_robots),1): 
                         try: 
-                                start = time.time()
                                 img = cameras[i].read_cv2_image()
                                 #dimensions = img.shape
-
                                 #cv2.imwrite(f"robo{i}_img.png", img)
                                 cv2.imshow(f"robo_window_{i}",img)
                                 #print(f"Image dimensions of {i}: {dimensions}")
-
-                                end = time.time()
-
-                                time_elapsed = end - start 
                                 #print(f"Time elapsed: {time_elapsed}")
 
                                 cv2.waitKey(1)
@@ -205,7 +198,7 @@ def main():
                 robotPublisher(robot_names)
                 print("done publishing")
                         
-        
+
         if exec_state == 'shutdown':
                 for i in range(0,len(robots)):
 

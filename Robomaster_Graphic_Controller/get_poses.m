@@ -2,7 +2,7 @@ function [r,poses] = get_poses(r,N,config)
         
         for i = 1:N.RobomasterF
             pose_vector = get_Pose(config,i);
-            pose_vector(4) = pose_vector(4) - pose_vector(3);
+            %pose_vector(4) = pose_vector(4) - pose_vector(3);
             poses.RobomasterF(:,i) = pose_vector;
             r.poses.RobomasterF = poses.RobomasterF(:,i);
         end

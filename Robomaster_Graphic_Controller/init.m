@@ -5,6 +5,8 @@ function [config,Nmax] = init()
 
     config.state_pub = rospublisher("/exec_state","std_msgs/String","DataFormat","struct");
     config.active_robots = rossubscriber("/robot_names","std_msgs/String","DataFormat","struct");
+    pause(1)
+
     ID = 1;
     config.joy=vrjoystick(ID);
 
@@ -19,7 +21,6 @@ function [config,Nmax] = init()
     config.robot_names = split(config.robot_names);
     
     Nmax.RobomasterF = length(config.robot_names);
-
     
    for i = 1:Nmax.RobomasterF
     config.r_sub(config.robot_names(i)) = rossubscriber("/vicon/"+config.robot_names(i)+"/"+config.robot_names(i),"geometry_msgs/TransformStamped");  

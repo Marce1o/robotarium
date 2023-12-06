@@ -17,7 +17,7 @@ function r = step_RobomasterF(r,w,g,N,config)
 end 
 
 
-function send_twist(topic,data)
+function send_twist(topic,data) %%%cambiar nombre
     msg = rosmessage(topic);
     msg.X = data(1);
     msg.Y = data(2);
